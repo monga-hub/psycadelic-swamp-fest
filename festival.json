@@ -1,0 +1,9 @@
+{
+  "_nota": "Parametri delle carte festival. Tuna qui: numero risorse, tipi distinti, punti. Le 18 carte si generano da questi.",
+  "carte_per_livello": 6,
+  "livelli": {
+    "1": { "risorse": 3, "distinte": 3, "punti": 5 },
+    "2": { "risorse": 5, "punti": 9 },
+    "3": { "risorse": 7, "punti": 13 }
+  }
+}

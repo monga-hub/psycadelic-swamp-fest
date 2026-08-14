@@ -1,0 +1,568 @@
+PSYCADELIC SWAMP FEST — Batch di 500/500 partite (seed 1..500), 3 giocatori
+
+█ Health check
+Parametri vitali del design — target tarati sul comportamento base, vedi HEALTH_TARGETS nel codice.
+
+	KPI	Valore	Target
+✓	Turni per giocatore	26.0	≥20–32
+✓	Inventario finale medio	5.0	≤10
+✓	Spreco risorse (%)	18.7	≥10–25
+✓	Costruzioni/accampamento	2.5	≥2–3
+✗	Contributi Festival (% capacità)	39.5	≥60–95
+✗	Stabilità leader a turno 20 (%)	47.4	≥50–70
+✓	Cambi leader medi	1.6	≥1
+✓	Carte invendute	0.0	≤2
+✓	Prima consegna L3 (turno)	33.0	≥20–60
+✓	Scarto winrate per posizione (%)	3.5	≤10
+
+█ KPI normalizzati per giocatore
+3p — confrontabile fra batch a 2/3/4 giocatori: il carico che tocca a ciascuno, non il totale di partita.
+
+KPI	Valore
+Turni/giocatore	26.0
+Consegne/giocatore	4.0
+Accampamenti/giocatore	7.4
+Raccolte/giocatore	3.5
+Costruzioni/giocatore	18.5
+Azioni totali/giocatore	26.0
+
+█ CONFIGURAZIONE — fotografia dell'esperimento
+fingerprint  5ab5bb07   (stesso hash = stesse regole, cambia solo il seed/campione)
+Giocatori    3 (P1, P2, P3)
+Personalità  P1: Bilanciato · P2: Bilanciato · P3: Bilanciato
+IA           P1: Rollout d6 r1 · P2: Rollout d6 r1 · P3: Rollout d6 r1
+Primo mossa  Sempre P1 · vantaggio-partenza (non-primo): 1 risorsa a scelta
+Mercato      ordine mescolato · 3 carte esposte
+Festival     Collaborativo ON, +42 PV a contributo (ogni altro giocatore ha un'occasione)
+Lavoratore   esclusivo (un nodo = max 1 lavoratore alla volta)
+Bonus risorse ogni 3 risorse in carico a fine partita → +1 PV
+Mazzo L1      4 carte disegnabili (PV totali pool 20) · pescate in partita: 4
+Mazzo L2      4 carte disegnabili (PV totali pool 24) · pescate in partita: 4
+Mazzo L3      4 carte disegnabili (PV totali pool 52) · pescate in partita: 4
+
+Per LABEL	P1	P2	P3	Pareggio
+Vittorie	168 (34%)	149 (30%)	177 (35%)	6 (1%)
+PV medi	167.6	163.1	167.1	—
+Per TURNO	Primo	Secondo	Terzo	Pareggio
+Vittorie	168 (34%)	149 (30%)	177 (35%)	6 (1%)
+
+OSSERVAZIONI
+• Nessun vantaggio di turno o di label rilevante in questo batch (scarti < 10 punti percentuali dall'atteso).
+• Pareggi: 1%.
+
+Partite valide: 500/500 · Turni medi: 77.9 · Turno medio prima pesca: 32.9
+
+Festival Collaborativo
+Aperti/partita	12.0
+Contributi totali/aperti	79%
+Contributi ricevuti/partita	P1: 3.2
+Contributi ricevuti/partita	P2: 3.1
+Contributi ricevuti/partita	P3: 3.2
+PV assegnati/partita	397.7
+Con contributo L1	47% (2000 aperti)
+Con contributo L2	86% (2000 aperti)
+Con contributo L3	104% (2000 aperti)
+Festival Pressure (riduce completabili)	1.2% (58/4735)
+
+Nuovi accampamenti
+Stesso bioma già usato	46%
+Bioma nuovo	54%
+Zone distinte/giocatore/partita	3.99 (su 4)
+
+Distribuzione lunghezza catene — n=11296, media 2.57, max 10
+Lunghezza	Catene
+1	3359 (30%)
+2	2967 (26%)
+3	2314 (20%)
+4	1302 (12%)
+5	737 (7%)
+6	455 (4%)
+7	129 (1%)
+8	30 (0%)
+9	2 (0%)
+10	1 (0%)
+
+Turno consegna	Primo	Secondo	Terzo
+1ª	18.3 (n=500)	16.8 (n=500)	20.6 (n=500)
+2ª	34.6 (n=500)	34.8 (n=500)	38.2 (n=500)
+3ª	51.4 (n=491)	52.4 (n=495)	54.8 (n=489)
+
+Permanenza carte sul mercato: media 17.6 turni (n=6000) · mai vendute a fine partita: 0
+
+Economia delle azioni (media/partita, tutti i giocatori — fotografia del design):
+Azione	Media	%
+Costruisci (rete)	33.0	42%
+Nuovo accampamento	22.6	29%
+Pesca	10.4	13%
+Consegna	12.0	15%
+
+Consegne disponibili ignorate (esisteva una carta completabile: l'hai consegnata o hai fatto altro?):
+Disponibili	Colte	Ignorate
+6638	5156 (78%)	1482 (22%)
+
+Rendimento marginale del turno (bucket di 10 turni, media/partita — solo le partite che arrivano fin lì):
+Turni	PV	Risorse	Accampamenti	n partite
+1-10	3.2	11.0	7.31	500
+11-20	7.9	9.3	5.13	500
+21-30	13.9	9.0	3.19	500
+31-40	13.5	9.6	2.28	500
+41-50	13.4	9.9	1.68	500
+51-60	14.4	10.7	1.21	500
+61-70	14.3	11.5	0.85	500
+71-80	12.7	9.1	0.40	460
+81-90	11.6	5.0	0.18	151
+91-100	12.2	4.3	0.00	9
+
+Accampamenti attivi nel tempo (bucket di 10 turni, quanti sono contemporaneamente aperti e non ancora abbandonati):
+Turni	Attivi medi
+1-10	1.00
+11-20	7.15
+21-30	10.88
+31-40	12.74
+41-50	13.21
+51-60	12.63
+61-70	10.24
+71-80	6.01
+81-90	3.11
+91-100	2.67
+
+Inventario medio per turno (bucket di 10 turni, risorse in carico medie per giocatore):
+Turni	Risorse medie
+1-10	2.6
+11-20	4.3
+21-30	4.2
+31-40	4.2
+41-50	4.2
+51-60	4.3
+61-70	4.7
+71-80	6.0
+81-90	8.4
+91-100	13.8
+
+Stabilità del leader (chi è in testa a un dato turno finisce per vincere?):
+Turno	% stesso vincitore	n
+10	38%	494
+20	47%	494
+30	56%	494
+40	61%	494
+50	70%	494
+60	77%	494
+70	87%	465
+80	95%	195
+90	92%	13
+100	100%	1
+
+Volatilità della leadership (quanto spesso cambia mano il comando della partita, n=500): cambi medi 1.6 · 1° cambio turno 31.4 · ultimo cambio turno 48.9 · senza cambi 20%
+Cambi	Partite
+0 cambi	100 (20%)
+1 cambio	164 (33%)
+2–3 cambi	201 (40%)
+4+ cambi	35 (7%)
+
+Azione successiva (stesso giocatore, quasi-Markov — dopo questa azione, la prossima è...):
+Azione	n	Distribuzione successiva
+costruisci	16253	costruisci 44% · nuovo accampamento 22% · consegna 19% · pesca 15%
+nuovo accampamento	10970	costruisci 47% · nuovo accampamento 34% · consegna 14% · pesca 6%
+consegna	5414	costruisci 50% · nuovo accampamento 30% · pesca 18% · consegna 3%
+pesca	4836	costruisci 39% · consegna 25% · pesca 25% · nuovo accampamento 12%
+
+Cronologia media della partita (turno medio a cui accade, n = partite che ci sono arrivate):
+Momento	Turno medio	n
+1° accampamento	1.0	500
+2° accampamento	2.0	500
+3° accampamento	3.0	500
+4° accampamento	4.9	500
+5° accampamento	6.2	500
+6° accampamento	7.6	500
+7° accampamento	9.2	500
+8° accampamento	10.8	500
+9° accampamento	12.5	500
+10° accampamento	14.4	500
+11° accampamento	16.4	500
+12° accampamento	18.6	500
+13° accampamento	21.3	500
+14° accampamento	24.1	500
+15° accampamento	27.3	500
+16° accampamento	30.9	500
+17° accampamento	34.9	500
+18° accampamento	39.4	499
+19° accampamento	44.4	492
+20° accampamento	49.9	471
+21° accampamento	55.2	418
+22° accampamento	60.5	324
+23° accampamento	64.6	188
+24° accampamento	66.8	92
+25° accampamento	72.1	37
+26° accampamento	70.9	8
+27° accampamento	76.3	3
+28° accampamento	77.0	1
+1ª raccolta	32.9	500
+2ª raccolta	42.7	500
+3ª raccolta	50.3	500
+4ª raccolta	55.4	498
+5ª raccolta	59.9	497
+6ª raccolta	63.6	487
+7ª raccolta	66.8	469
+8ª raccolta	69.1	425
+9ª raccolta	71.5	360
+10ª raccolta	73.7	297
+11ª raccolta	75.4	225
+12ª raccolta	77.4	152
+13ª raccolta	78.7	107
+14ª raccolta	80.2	72
+15ª raccolta	82.4	48
+16ª raccolta	83.1	25
+17ª raccolta	83.0	12
+18ª raccolta	85.8	8
+19ª raccolta	88.7	6
+20ª raccolta	90.0	6
+21ª raccolta	91.8	4
+1ª consegna L1	14.8	500
+1ª consegna L2	21.8	500
+1ª consegna L3	33.0	500
+primo contributo festival	16.2	500
+ultima consegna	77.9	500
+fine partita	77.9	500
+
+Valore dell'ultima consegna: turno medio 77.9 · PV medi 11.0 · chiude la partita nel 100% dei casi (n=500)
+
+Tempo raccolta → consegna (turni fra l'ultimo ingresso di risorse e la consegna successiva, stesso giocatore): media 3.2 (n=6000)
+Gap	Consegne
+1 turno	0 (0%)
+2 turni	0 (0%)
+3–5 turni	5691 (95%)
+>5 turni	309 (5%)
+
+Scarto PV (max-min)	Partite
+0	0 (0%)
+1	2 (0%)
+2	0 (0%)
+3–5	2 (0%)
+>5	496 (99%)
+
+Scomposizione PV per fonte (media per partita, tutti i giocatori) — L1: 20.0 · L2: 24.0 · L3: 52.0 · bonus risorse: P1 1.5 · P2 1.4 · P3 1.3
+
+Bonus fine partita
+Regola sperimentale: ogni 3 risorse rimaste in carico a fine partita (avanzo scartato) → +1 PV.
+	P1	P2	P3
+Risorse finali	5.3	5.0	4.7
+PV bonus	1.5	1.4	1.3
+
+PV bonus ottenuti	Partite-giocatore
+0	30%
+1	30%
+2	23%
+3	11%
+4	4%
+5	1%
+6	0%
+7	0%
+8	0%
+9	0%
+10	0%
+
+Partite decise dal bonus (n=500) — il bonus è solo uno spareggio elegante o cambia davvero l'esito?
+Esito	%
+Nessun cambiamento	98%
+Pareggio risolto	1%
+Vincitore ribaltato	1%
+
+Bonus per posizione in classifica finale (il bonus premia chi vince già?):
+Posizione	PV bonus medi	n
+Primo	+1.4	500
+Secondo	+1.3	500
+Terzo	+1.4	500
+
+Inventario finale vs winrate (risorse in carico a fine partita — chi ne accumula tante vince di più o di meno?):
+Risorse finali	Winrate	n
+0-2	38%	446
+3-5	28%	456
+6-8	29%	345
+9-11	36%	159
+12+	45%	94
+
+Consegne per livello (n. carte)	P1	P2	P3
+L1	1.4	1.4	1.2
+L2	1.4	1.3	1.3
+L3	1.3	1.4	1.3
+
+Nodo	Costruzioni
+-5,0	6863
+5,0	6115
+0,-4	4035
+4,-4	3818
+-4,4	3496
+
+Apertura nuovi accampamenti (n=11033) — il nodo al momento del seed era:
+Libero (nessuno)	Condiviso (già lui)	Conteso (già un avversario)
+27%	4%	69%
+
+Giocatori presenti per nodo (quanti giocatori distinti hanno un seed lì, per partita):
+Nodo	Media giocatori	Distribuzione
+-5,0	3.0 (n=500)	2:1% 3:99%
+5,0	3.0 (n=500)	2:2% 3:98%
+0,-4	2.8 (n=500)	2:24% 3:76%
+0,4	2.8 (n=500)	1:1% 2:22% 3:77%
+4,-4	2.7 (n=500)	1:1% 2:25% 3:75%
+-4,4	2.7 (n=500)	1:0% 2:27% 3:73%
+
+Fine partita — motivo (regola accampamentiMax):
+Esaurimento commesse (mercato)	Esaurimento accampamenti
+500 (100%)	0 (0%)
+
+Accampamenti aperti totali (per giocatore, su tutto il batch):
+P1	P2	P3
+3702 (7.40/partita)	3686 (7.37/partita)	3645 (7.29/partita)
+
+Valore di un accampamento per ordine di apertura (1° del giocatore, 2°, ... — 6+ accorpati). PV e consegne non sono attribuibili: le risorse sono un pool fungibile per giocatore, non tracciate per accampamento.
+Ordine	n	Turno apertura	Rete finale	Costruzioni	Raccolte	Risorse
+1	1500	2.0	3.14	3.09	0.56	1.52
+2	1500	6.5	2.89	2.85	0.54	1.26
+3	1500	11.4	2.97	2.90	0.61	1.29
+4	1500	17.3	2.81	2.74	0.58	1.20
+5	1498	25.6	2.58	2.50	0.48	0.99
+6+	3798	Infinity	1.96	1.86	0.27	0.56
+
+Curva di maturazione della rete (rete media a N turni dall'apertura — solo accampamenti che hanno "vissuto" fin lì):
+Età (turni dall'apertura)	Rete media	n
++0	1.00	11185
++10	1.43	10858
++20	1.68	10363
++30	2.02	9660
++40	2.26	8736
++50	2.50	7474
++60	2.76	5663
++70	2.93	2969
++80	3.12	549
++90	3.38	26
+
+Tempo morto degli accampamenti per ordine (vita utile = apertura→ultima attività, coda morta = ultima attività→fine partita):
+Ordine	n	Vita utile	Coda morta	% ancora attivi a fine partita
+1	1500	51.5	24.4	14%
+2	1500	46.3	25.1	15%
+3	1500	42.0	24.6	14%
+4	1500	36.3	24.3	14%
+5	1498	28.9	23.5	13%
+6+	3798	NaN	-Infinity	18%
+
+Risorse sprecate (media/partita per giocatore — rimaste = inventario a fine partita):
+Giocatore	Raccolte	Spese	Rimaste	% sprecato
+P1	28.1	20.3	5.3	19%
+P2	26.7	20.2	5.0	19%
+P3	26.1	19.6	4.7	18%
+
+Qualità delle carte (esposizioni = volte apparse nel mercato, tasso = % consegnate sulle esposizioni):
+Carta	L	Esposizioni	Consegne	Tasso	Turno esposizione	Turno consegna
+L1-0	1	500	500	100%	28.3	33.2
+L1-1	1	500	500	100%	26.1	35.3
+L1-2	1	500	500	100%	27.3	36.1
+L1-3	1	500	500	100%	29.2	34.4
+L2-4	2	500	500	100%	26.0	38.8
+L2-5	2	500	500	100%	24.7	42.9
+L2-6	2	500	500	100%	26.4	38.9
+L2-7	2	500	500	100%	24.7	49.1
+L3-8	3	500	500	100%	25.8	53.1
+L3-9	3	500	500	100%	25.4	62.2
+L3-10	3	500	500	100%	25.9	53.3
+L3-11	3	500	500	100%	25.7	49.2
+
+Utilizzo pozioni (sperimentale — commesse completate diventano poteri monouso invece di essere scartate):
+Pozione	Ottenute	Usate	% uso	Turno ottenimento	Turno uso	Permanenza	Inutilizzate
+crescita	1000	852	85%	44.0	43.1	4.2	148
+crescita2	0	0	0%	0.0	—	—	0
+visione	1000	661	66%	57.7	52.0	4.1	339
+abbondanza	1000	890	89%	40.9	52.8	15.1	110
+salto	1000	901	90%	35.3	42.0	9.1	99
+euforia	1000	402	40%	51.3	55.3	16.1	598
+trasmutazione	0	0	0%	0.0	—	—	0
+omissione	1000	844	84%	34.3	48.1	17.7	156
+convergenza	0	0	0%	0.0	—	—	0
+
+Valore alla vittoria (fra chi ha OTTENUTO la pozione: usata almeno 1 volta vs mai usata):
+Pozione	Winrate uso	Winrate non-uso	PV con uso	PV senza uso
+crescita	30% (n=760)	27% (n=111)	159.7	170.5
+crescita2	—	—	—	—
+visione	32% (n=609)	43% (n=240)	163.4	175.0
+abbondanza	33% (n=777)	34% (n=73)	164.6	168.5
+salto	31% (n=797)	36% (n=69)	164.7	166.3
+euforia	29% (n=389)	32% (n=490)	162.7	163.0
+trasmutazione	—	—	—	—
+omissione	29% (n=732)	28% (n=104)	160.6	166.9
+convergenza	—	—	—	—
+
+Swing della pozione (PV/posizione 1 turno prima → 10 turni dopo l'uso, censurato se la partita finisce prima):
+Pozione	Δ PV	Δ posizione	n
+crescita	+22.0	-0.0	767
+crescita2	—	—	0
+visione	+26.0	-0.0	527
+abbondanza	+30.6	+0.1	740
+salto	+19.8	-0.1	828
+euforia	+30.7	+0.0	312
+trasmutazione	—	—	0
+omissione	+21.6	-0.1	703
+convergenza	—	—	0
+
+Valore della pozione per livello (ruolo nella progressione della partita: L1 immediate? L2 tattiche? L3 esplosive?):
+Livello	Pozione	% uso	Permanenza	Δ PV swing	Winrate uso
+1	omissione	84%	17.7	+21.6 (n=703)	29% (n=732)
+1	salto	90%	9.1	+19.8 (n=828)	31% (n=797)
+2	abbondanza	89%	15.1	+30.6 (n=740)	33% (n=777)
+2	crescita	85%	4.2	+22.0 (n=767)	30% (n=760)
+3	euforia	40%	16.1	+30.7 (n=312)	29% (n=389)
+3	visione	66%	4.1	+26.0 (n=527)	32% (n=609)
+
+Ritmo — costruzioni (rete) per nuovo accampamento (seed), per giocatore:
+P1	P2	P3
+9360 / 3702 = 2.5	9244 / 3686 = 2.5	9171 / 3645 = 2.5
+
+Saturazione nodo (totale accampamenti aperti per giocatore, su tutto il batch):
+Nodo	P1	P2	P3
+-4,4	662	698	685
+4,-4	700	642	671
+0,4	655	658	644
+-5,0	575	568	543
+0,-4	548	569	558
+5,0	562	551	544
+
+Turno medio di apertura per tipo (isola l'effetto tempo dal tipo di nodo):
+Libero	Condiviso	Conteso
+turno 5.5 (n=3000)	turno 16.0 (n=430)	turno 30.1 (n=7603)
+
+Heatmap hex costruibili: 136 totali · 0 mai costruiti in 500 partite
+Hex	Costruzioni	Turno medio
+-6,1	500	4.1
+0,3	500	7.4
+1,-5	500	4.0
+5,1	500	5.9
+-4,0	499	11.8
+4,0	496	14.4
+-1,-4	493	15.7
+-5,5	482	25.5
+-4,3	481	22.2
+-6,2	479	15.1
+5,-5	473	21.7
+-1,5	470	33.6
+4,2	458	17.9
+1,4	455	36.9
+-3,4	446	25.3
+4,-5	445	21.1
+-4,5	437	24.6
+4,-3	418	19.8
+6,-5	410	36.5
+-1,-5	401	30.5
+-1,3	392	23.2
+1,3	371	33.5
+3,1	369	35.5
+-4,1	367	31.3
+7,-1	355	37.9
+1,-6	349	24.2
+-6,-1	345	30.4
+-5,-1	343	33.8
+-3,-1	342	28.2
+3,-4	342	18.9
+4,-1	338	33.0
+3,-3	335	17.9
+-4,6	318	45.1
+-6,6	301	48.7
+6,-1	301	38.7
+-7,3	299	44.5
+0,-3	298	41.3
+2,-5	298	18.7
+-3,-2	290	37.9
+4,-6	287	42.6
+-6,-2	284	43.8
+2,4	279	49.6
+4,3	276	48.0
+-1,-3	272	42.1
+-3,-3	267	48.7
+8,-2	267	49.4
+-3,2	260	43.9
+3,-6	251	41.9
+-4,-3	244	55.2
+-8,2	237	55.3
+1,-2	237	51.0
+-2,5	234	50.4
+5,-2	231	39.2
+8,-3	227	58.8
+6,0	222	29.5
+0,-6	207	40.0
+-5,4	199	58.8
+-1,2	198	54.5
+-6,0	197	24.0
+-4,-4	197	59.9
+5,-3	194	38.2
+-7,0	192	35.8
+7,0	192	40.3
+7,-3	184	59.9
+-7,1	182	41.8
+7,-5	181	54.0
+0,-2	179	50.7
+6,2	176	59.1
+6,1	173	43.8
+-1,-2	172	44.5
+2,-3	165	31.7
+0,5	161	59.5
+-2,-1	159	44.8
+3,-2	155	31.9
+-8,3	147	56.2
+-4,-1	147	23.8
+3,-1	144	53.2
+-8,1	143	50.1
+-1,-6	142	54.6
+-8,4	140	56.0
+-2,2	140	57.0
+5,-1	138	26.9
+-5,2	131	32.8
+-5,-3	126	51.0
+5,3	126	61.1
+3,2	125	34.9
+6,-4	123	50.1
+7,1	115	54.5
+1,-4	112	30.9
+-2,-5	107	51.5
+-7,6	105	63.4
+4,4	104	65.1
+1,-3	97	43.4
+-4,-2	95	54.2
+6,-3	95	50.9
+-7,4	93	58.3
+2,1	91	61.2
+-3,-5	89	65.3
+2,-4	89	32.2
+-6,4	87	64.9
+-2,0	85	60.5
+1,2	80	45.4
+-3,6	74	60.9
+-2,3	71	36.2
+-3,1	70	54.9
+3,4	70	55.9
+0,6	69	67.4
+-7,5	63	65.0
+-1,6	62	59.6
+6,-2	60	54.0
+-2,-3	56	47.0
+-2,4	56	34.6
+7,-4	56	55.7
+2,-1	48	65.1
+-5,-2	46	58.6
+1,6	45	70.0
+-2,1	41	63.0
+1,1	40	66.9
+1,5	37	53.2
+8,-5	36	64.1
+-5,3	34	65.9
+-1,-1	34	57.0
+2,0	33	67.1
+5,-6	27	49.2
+7,-2	27	61.9
+6,-6	26	58.9
+-6,3	22	57.0
+2,2	20	48.1
+-3,0	19	51.2
+-3,5	19	48.0
+-2,6	14	65.6
+3,0	14	58.3
+-4,2	12	46.7
+-2,-4	12	57.8
+3,3	8	61.0
+-6,5	4	55.5

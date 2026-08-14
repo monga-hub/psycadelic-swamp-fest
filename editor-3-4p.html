@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Festival — Editor tabellone 3 giocatori</title>
+<style>
+  :root { --bg:#fafafa; --ink:#222; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px system-ui,sans-serif; color:var(--ink); background:var(--bg); }
+  #bar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px; border-bottom:1px solid #ddd; position:sticky; top:0; background:#fff; z-index:2; }
+  .brush { border:1px solid #bbb; border-radius:6px; padding:4px 8px; cursor:pointer; background:#fff; }
+  .brush.on { outline:3px solid #333; }
+  .sw { display:inline-block; width:12px; height:12px; border-radius:2px; vertical-align:-1px; margin-right:4px; }
+  #wrap { width:100%; height:calc(100vh - 52px); overflow:auto; }
+  svg { display:block; margin:auto; }
+  polygon { stroke:#3a3a8a; stroke-width:1.5; cursor:pointer; }
+  text { pointer-events:none; font-size:16px; text-anchor:middle; dominant-baseline:central; }
+  select,input { font:inherit; }
+  #stats { display:flex; flex-wrap:wrap; gap:6px 16px; padding:8px 10px; border-bottom:1px solid #ddd; background:#fff; font-size:13px; }
+  #stats .grp { display:flex; gap:8px; align-items:center; }
+  #stats .chip { display:flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; background:#f0f0f0; }
+</style>
+<div id="bar">
+  <strong>Pennello:</strong>
+  <span id="brushes"></span>
+  <label>risorsa <select id="res"></select></label>
+  <span style="flex:1"></span>
+  <label>raggio <input id="rad" type="number" value="8" min="2" max="12" style="width:48px"></label>
+  <button class="brush" id="regen">rigenera</button>
+  <button class="brush" id="exp">export board-3-4p.json</button>
+  <label class="brush">import<input id="imp" type="file" accept=".json" hidden></label>
+  <button class="brush" id="useSim" style="background:#d6ffe6">▶ Usa nel simulatore</button>
+  <a class="brush" href="index.html" style="text-decoration:none">🏠 Torna alla home</a>
+</div>
+<p style="margin:6px 10px;color:#666">Editor tabellone grande (3 giocatori) — carica <code>board-3-4p.json</code> esistente all'apertura. "cancella" su un hex lo rimuove dalla mappa esportata (bordo/forma libera).</p>
+<div id="stats"></div>
+<div id="wrap"><svg id="svg"></svg></div>
+<script>
+const ZONES = {
+  rosa:'#d98cb3', arancio:'#e8952e', verde:'#8bc34a', giallo:'#f4e12a', centrale:'#c9a66b'
+};
+const RISORSE = {
+  girasole:'🌻', ibisco:'🌺', rana:'🐸', tartaruga:'🐢',
+  fungo_rosso:'🍄', fungo_marrone:'🍄‍🟫', cactus:'🌵', peperoncino:'🌶️'
+};
+const SIZE = 34, OFF = '#eee';
+let R = 8, cells = new Map(), brush = 'rosa', painting = false;
+
+const key = (q,r) => `${q},${r}`;
+const cell = (q,r) => cells.get(key(q,r));
+
+function build() {
+  cells = new Map();
+  for (let q=-R; q<=R; q++)
+    for (let r=Math.max(-R,-q-R); r<=Math.min(R,-q+R); r++)
+      cells.set(key(q,r), { q, r, zone:null, node:null, resource:null });
+  render();
+  updateStats();
+}
+
+function px(q,r) { return { x: SIZE*Math.sqrt(3)*(q + r/2), y: SIZE*1.5*r }; }
+function corners(cx,cy) {
+  let p=[];
+  for (let i=0;i<6;i++){ const a=Math.PI/180*(60*i+90); p.push(`${(cx+SIZE*Math.cos(a)).toFixed(1)},${(cy+SIZE*Math.sin(a)).toFixed(1)}`); }
+  return p.join(' ');
+}
+
+function fill(c) {
+  if (c.node === 'festival') return '#7a5230';
+  if (c.node === 'nodo') return '#5a3d1e';
+  if (c.zone) return ZONES[c.zone];
+  return OFF;
+}
+function glyph(c) {
+  if (c.node === 'festival') return '🎪';
+  if (c.node === 'nodo') return '🟤';
+  if (c.resource) return RISORSE[c.resource];
+  return '';
+}
+
+function paint(c) {
+  if (brush === 'erase') { c.zone=null; c.node=null; c.resource=null; }
+  else if (brush === 'nodo' || brush === 'festival') c.node = (c.node===brush)?null:brush;
+  else if (brush === 'risorsa') c.resource = (c.resource)?null:document.getElementById('res').value;
+  else c.zone = (c.zone===brush)?null:brush; // zona
+  drawCell(c);
+  updateStats();
+}
+
+function updateStats() {
+  const zoneN = Object.fromEntries(Object.keys(ZONES).map(z=>[z,0]));
+  const resN = Object.fromEntries(Object.keys(RISORSE).map(r=>[r,0]));
+  let nodo=0, festival=0, tot=0;
+  for (const c of cells.values()) {
+    if (!c.zone && !c.node) continue; // hex "off" (non esportato)
+    tot++;
+    if (c.zone) zoneN[c.zone]++;
+    if (c.resource) resN[c.resource]++;
+    if (c.node === 'nodo') nodo++;
+    if (c.node === 'festival') festival++;
+  }
+  const chip = (sw, label, n) => `<span class="chip">${sw}${label} <b>${n}</b></span>`;
+  const zoneHtml = Object.entries(zoneN).map(([z,n]) => chip(`<span class="sw" style="background:${ZONES[z]}"></span>`, z, n)).join('');
+  const resHtml = Object.entries(RISORSE).map(([r,e]) => chip('', `${e} ${r}`, resN[r])).join('');
+  document.getElementById('stats').innerHTML =
+    `<span class="grp"><strong>Esagoni:</strong> ${chip('', 'totale', tot)}${zoneHtml}${chip('🟤','nodo',nodo)}${chip('🎪','festival',festival)}</span>`
+    + `<span class="grp"><strong>Risorse:</strong> ${resHtml}</span>`;
+}
+
+function drawCell(c) {
+  const g = document.getElementById(key(c.q,c.r));
+  g.querySelector('polygon').setAttribute('fill', fill(c));
+  g.querySelector('text').textContent = glyph(c);
+}
+
+function render() {
+  const svg = document.getElementById('svg');
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  for (const c of cells.values()){ const {x,y}=px(c.q,c.r); minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y); }
+  const pad=SIZE+6;
+  svg.setAttribute('viewBox', `${minX-pad} ${minY-pad} ${maxX-minX+2*pad} ${maxY-minY+2*pad}`);
+  svg.style.width = (maxX-minX+2*pad)+'px';
+  svg.innerHTML='';
+  for (const c of cells.values()){
+    const {x,y}=px(c.q,c.r);
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.id=key(c.q,c.r);
+    g.innerHTML=`<polygon points="${corners(x,y)}" fill="${fill(c)}"/><text x="${x}" y="${y}">${glyph(c)}</text>`;
+    g.onmousedown=e=>{ e.preventDefault(); painting=true; paint(c); };
+    g.onmouseover=()=>{ if(painting) paint(c); };
+    svg.appendChild(g);
+  }
+}
+window.onmouseup=()=>painting=false;
+
+// UI
+const brushDefs=[...Object.keys(ZONES).map(z=>({id:z,label:z,col:ZONES[z]})),
+  {id:'nodo',label:'nodo 🟤'},{id:'festival',label:'festival 🎪'},
+  {id:'risorsa',label:'risorsa'},{id:'erase',label:'cancella'}];
+const bhost=document.getElementById('brushes');
+brushDefs.forEach(b=>{
+  const el=document.createElement('button'); el.className='brush'; el.dataset.id=b.id;
+  el.innerHTML=(b.col?`<span class="sw" style="background:${b.col}"></span>`:'')+b.label;
+  el.onclick=()=>{ brush=b.id; [...bhost.children].forEach(x=>x.classList.toggle('on',x.dataset.id===b.id)); };
+  bhost.appendChild(el);
+});
+bhost.firstChild.classList.add('on');
+const res=document.getElementById('res');
+for (const r of Object.keys(RISORSE)){ const o=document.createElement('option'); o.value=r; o.textContent=`${RISORSE[r]} ${r}`; res.appendChild(o); }
+
+document.getElementById('regen').onclick=()=>{ R=+document.getElementById('rad').value; build(); };
+function boardData() {
+  const out=[...cells.values()].filter(c=>c.zone||c.node).map(({q,r,zone,node,resource})=>({q,r,zone,node,resource}));
+  return {radius:R,hexes:out};
+}
+document.getElementById('exp').onclick=()=>{
+  const blob=new Blob([JSON.stringify(boardData(),null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='board-3-4p.json'; a.click();
+};
+// salva la mappa corrente in localStorage (sovrascrive il file su disco solo nel browser, non serve
+// spostare file a mano) e torna alla home: index.html/game.html la leggono da lì se presente.
+document.getElementById('useSim').onclick=()=>{
+  localStorage.setItem('swampBoard:3p', JSON.stringify(boardData()));
+  location.href='index.html';
+};
+function loadFrom(d) {
+  R=d.radius||R; document.getElementById('rad').value=R; build();
+  for (const h of d.hexes){ const c=cell(h.q,h.r); if(c){ c.zone=h.zone; c.node=h.node; c.resource=h.resource; drawCell(c); } }
+  updateStats();
+}
+document.getElementById('imp').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(t=>loadFrom(JSON.parse(t)));
+};
+
+// all'apertura carica la board-3-4p.json corrente (se esiste), così si parte dal generato invece che da vuoto
+fetch('board-3-4p.json').then(r=>r.ok?r.json():Promise.reject()).then(loadFrom).catch(build);
+</script>

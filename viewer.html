@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Psycadelic Swamp — Replay</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px system-ui, sans-serif; color: #222; background: #fafafa; display: flex; height: 100vh; }
+  #left { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #stage { flex: 1; overflow: auto; }
+  svg { display: block; margin: auto; }
+  polygon { stroke: #3a3a8a; stroke-width: 1.2; }
+  text { text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  #ctrl { display: flex; gap: 8px; align-items: center; padding: 10px; border-top: 1px solid #ddd; background: #fff; }
+  #ctrl button { font-size: 15px; padding: 4px 12px; cursor: pointer; }
+  #slider { flex: 1; }
+  #panel { width: 320px; border-left: 1px solid #ddd; background: #fff; padding: 14px; overflow: auto; }
+  .pl { border: 1px solid #eee; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+  .pl h3 { margin: 0 0 4px; display: flex; justify-content: space-between; }
+  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; margin-right: 4px; }
+  .card { border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; margin: 6px 0; font-size: 13px; }
+  .lv1 { border-left: 4px solid #7ac77a; } .lv2 { border-left: 4px solid #e0a63a; } .lv3 { border-left: 4px solid #d05a5a; }
+  #act { min-height: 20px; font-weight: 600; color: #444; }
+  small { color: #888; }
+</style>
+<div id="left">
+  <div id="stage"><svg id="svg"></svg></div>
+  <div id="ctrl">
+    <button id="first">⏮</button><button id="prev">◀</button>
+    <button id="play">▶︎ play</button><button id="next">▶</button>
+    <input id="slider" type="range" min="0" value="0">
+    <span id="tcount"></span>
+    <label>vel <input id="speed" type="range" min="60" max="800" value="300" style="width:80px"></label>
+  </div>
+</div>
+<div id="panel">
+  <div id="act"></div>
+  <div id="players"></div>
+  <h3 style="margin:12px 0 4px">Mercato festival</h3>
+  <div id="market"></div>
+</div>
+<script>
+const ZONES = { rosa:'#d98cb3', arancio:'#e8952e', verde:'#8bc34a', giallo:'#f4e12a', centrale:'#c9a66b' };
+const RIS = { girasole:'🌻', ibisco:'🌺', rana:'🐸', tartaruga:'🐢', fungo_rosso:'🍄', fungo_marrone:'🍄‍🟫', cactus:'🌵', peperoncino:'🌶️' };
+const PCOL = { P1:'#1e6fd0', P2:'#d0271e' };
+const SIZE = 30;
+const hk = (q, r) => `${q},${r}`;
+const px = (q, r) => ({ x: SIZE * Math.sqrt(3) * (q + r/2), y: SIZE * 1.5 * r });
+function corners(cx, cy, f=1) { let p=[]; for (let i=0;i<6;i++){ const a=Math.PI/180*(60*i+90); p.push(`${(cx+f*SIZE*Math.cos(a)).toFixed(1)},${(cy+f*SIZE*Math.sin(a)).toFixed(1)}`);} return p.join(' '); }
+
+let board, replay, hexById = new Map(), cur = 0, timer = null;
+
+Promise.all([fetch('board.json').then(r=>r.json()), fetch('replay.json').then(r=>r.json())])
+  .then(([b, rp]) => { board = b; replay = rp; for (const h of b.hexes) hexById.set(hk(h.q,h.r), h);
+    document.getElementById('slider').max = rp.frames.length - 1; setup(); draw(0); });
+
+function activeRes(h) { return h.resource && replay.attive[h.zone] === h.resource; }
+
+let vb;
+function setup() {
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  for (const h of board.hexes){ const {x,y}=px(h.q,h.r); minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}
+  const pad=SIZE+6; vb=[minX-pad,minY-pad,maxX-minX+2*pad,maxY-minY+2*pad];
+}
+
+function draw(i) {
+  cur = i;
+  const f = replay.frames[i];
+  const built = new Map(f.built);
+  const svg = document.getElementById('svg');
+  svg.setAttribute('viewBox', vb.join(' ')); svg.style.width = vb[2]+'px';
+  let s = '';
+  // base hex
+  for (const h of board.hexes) {
+    const { x, y } = px(h.q, h.r);
+    let fill = h.node === 'festival' ? '#7a5230' : h.node === 'nodo' ? '#5a3d1e' : ZONES[h.zone];
+    s += `<polygon points="${corners(x,y)}" fill="${fill}"/>`;
+    // risorsa: attiva piena, inattiva sbiadita
+    if (h.resource) s += `<text x="${x}" y="${y}" font-size="15" opacity="${activeRes(h)?1:0.28}">${RIS[h.resource]}</text>`;
+    if (h.node === 'festival') s += `<text x="${x}" y="${y}" font-size="16">🎪</text>`;
+    if (h.node === 'nodo') s += `<text x="${x}" y="${y}" font-size="15">🟤</text>`;
+    // accampamento
+    const owner = built.get(hk(h.q,h.r));
+    if (owner) s += `<polygon points="${corners(x,y,0.62)}" fill="${PCOL[owner]}" fill-opacity="0.9" stroke="#fff" stroke-width="1.5"/>`;
+  }
+  // lavoratori
+  for (const [pid, loc] of Object.entries(f.workers)) {
+    let c; if (loc === 'festival') c = px(0,0); else { const [q,r]=loc.split(',').map(Number); c = px(q,r); }
+    const off = pid === 'P1' ? -9 : 9;
+    s += `<circle cx="${c.x+off}" cy="${c.y}" r="9" fill="${PCOL[pid]}" stroke="#fff" stroke-width="2"/>`;
+    s += `<text x="${c.x+off}" y="${c.y}" font-size="10" fill="#fff" font-weight="bold">${pid[1]}</text>`;
+  }
+  svg.innerHTML = s;
+  panel(f);
+  document.getElementById('slider').value = i;
+  document.getElementById('tcount').textContent = `${i}/${replay.frames.length-1}`;
+}
+
+function descr(f) {
+  if (!f.azione) return `Stato iniziale — attive: ${Object.entries(replay.attive).map(([z,r])=>RIS[r]).join(' ')}`;
+  const a = f.azione, p = f.pid;
+  if (a.tipo === 'costruisci') return `${p} costruisce a ${a.nodeK} (${a.targetK}) → pesca ${Array.isArray(f.res?.pescate)?f.res.pescate.map(r=>RIS[r]).join(''):''} [forza ${f.res?.forza}]`;
+  if (a.tipo === 'pesca') return `${p} pesca a ${a.nodeK} → ${(f.res||[]).map(r=>RIS[r]).join('')||'niente'}`;
+  if (a.tipo === 'consegna') return `${p} consegna ${a.cartaId} → +${f.res?.punti} PV 🎉`;
+}
+
+function panel(f) {
+  document.getElementById('act').textContent = descr(f);
+  document.getElementById('players').innerHTML = ['P1','P2'].map(p => {
+    const load = Object.entries(f.carico[p]).map(([r,c])=>`${RIS[r]}${c}`).join(' ') || '<small>vuoto</small>';
+    return `<div class="pl"><h3><span><span class="dot" style="background:${PCOL[p]}"></span>${p}</span><span>${f.punti[p]} PV</span></h3>
+      <div>carte: ${f.carte[p]} · carico: ${load}</div></div>`;
+  }).join('');
+  document.getElementById('market').innerHTML = f.mercato.map(c => {
+    const need = Object.entries(c.need).map(([r,n])=>`${RIS[r]}×${n}`).join(' ');
+    return `<div class="card lv${c.livello}"><b>L${c.livello}</b> · ${c.punti} PV<br>${need}</div>`;
+  }).join('') || '<small>vuoto — partita finita</small>';
+}
+
+// controlli
+const at = (i) => draw(Math.max(0, Math.min(replay.frames.length-1, i)));
+document.getElementById('first').onclick = () => at(0);
+document.getElementById('prev').onclick = () => at(cur-1);
+document.getElementById('next').onclick = () => at(cur+1);
+document.getElementById('slider').oninput = (e) => at(+e.target.value);
+document.getElementById('play').onclick = function() {
+  if (timer) { clearInterval(timer); timer = null; this.textContent = '▶︎ play'; return; }
+  this.textContent = '⏸ pausa';
+  const step = () => { if (cur >= replay.frames.length-1) { clearInterval(timer); timer=null; this.textContent='▶︎ play'; return; } at(cur+1); };
+  timer = setInterval(step, 860 - +document.getElementById('speed').value);
+};
+</script>

@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Psycadelic Swamp Fest</title>
+<style>
+  * { box-sizing: border-box; }
+  :root { --p1: #29d0ff; --p2: #ff3d84; --ink: #e9e4ff; --muted: #9a90c4;
+    --glass: rgba(30, 20, 55, 0.72); --line: rgba(150, 120, 255, 0.22); }
+  body { margin: 0; color: var(--ink); font: 14px/1.45 'Trebuchet MS', system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #3a1c6b 0%, transparent 55%),
+      radial-gradient(900px 600px at 15% 110%, #0c3b4a 0%, transparent 50%),
+      radial-gradient(900px 600px at 90% 90%, #4a123f 0%, transparent 50%),
+      linear-gradient(160deg, #0b0820 0%, #120a2e 55%, #0a0a24 100%);
+    background-attachment: fixed; min-height: 100vh; }
+  main { max-width: 640px; margin: 0 auto; padding: 6vh 24px 6vh; }
+  /* il pannello Gioca esce dal max-width:640 di main — la board ha bisogno di più spazio del form di
+     config; senza questo resta schiacciata a ~200px indipendentemente da quanto è largo lo schermo. */
+  #giocaPanel { max-width: 1400px; width: calc(100vw - 48px); position: relative; left: 50%; transform: translateX(-50%); }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: .5px;
+    background: linear-gradient(90deg, #ff77e1, #ffd166, #6fffd1, #7cc6ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 12px rgba(255,120,230,.35)); font-weight: 800; }
+  .sub { color: var(--muted); margin: 0 0 22px; font-style: italic; }
+  .card { background: var(--glass); border: 1px solid var(--line); border-radius: 18px;
+    padding: 22px 26px; box-shadow: 0 20px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter: blur(8px); margin-bottom: 20px; }
+  .card h2 { margin: 0 0 12px; font-size: 16px; color: #ffd166; }
+  details.card summary { cursor: pointer; list-style: none; }
+  details.card summary::-webkit-details-marker { display: none; }
+  details.card summary h2 { display: inline-block; margin: 0; }
+  details.card summary h2::before { content: '▸ '; }
+  details.card[open] summary h2::before { content: '▾ '; }
+  details.card:not([open]) summary h2 { margin-bottom: 0; }
+  .links { display: flex; gap: 10px; flex-wrap: wrap; }
+  .links a { color: #150a2e; text-decoration: none; font-weight: 700; padding: 9px 18px;
+    border-radius: 10px; background: linear-gradient(90deg, #7cc6ff, #6fffd1);
+    box-shadow: 0 6px 18px -6px #29d0ffaa; }
+  .links a.alt { background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid var(--line);
+    box-shadow: none; }
+  .row { display: flex; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+  .row > label { color: var(--muted); font-weight: 700; }
+  input[type=number], select { background: rgba(0,0,0,.3); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 8px; padding: 6px 9px; }
+  input[type=number] { width: 90px; }
+  input.qty { width: 40px; padding: 3px 5px; }
+  input.pv { width: 50px; padding: 3px 5px; }
+  .deckwrap { overflow-x: auto; }
+  .lvltitle { color: #ffd166; font-weight: 700; margin: 14px 0 6px; }
+  button.x { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 15px; padding: 2px 6px; }
+  button.x:hover { color: #ff3d84; }
+  button.go { padding: 9px 20px; font-size: 14px; font-weight: 800; border: 0; border-radius: 10px;
+    color: #150a2e; cursor: pointer; letter-spacing: .3px;
+    background: linear-gradient(90deg, #ff77e1, #ffd166, #6fffd1);
+    box-shadow: 0 8px 22px -6px #ff77e1aa; }
+  button.go:disabled { opacity: .5; cursor: default; }
+  button.mini { font-size: 12px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 20px;
+    background: rgba(255,255,255,.05); color: var(--ink); cursor: pointer; }
+  button.mini:hover { background: rgba(255,255,255,.12); }
+  #status { color: var(--muted); margin-top: 6px; }
+  #result { display: none; margin-top: 16px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 13px; }
+  td, th { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+  th { color: var(--muted); font-weight: 700; }
+  .p1 { color: var(--p1); } .p2 { color: var(--p2); }
+  pre { white-space: pre-wrap; font: 12px/1.5 ui-monospace, monospace; color: var(--muted);
+    max-height: 260px; overflow: auto; margin: 0; }
+</style>
+<main>
+  <h1>🪷 Psycadelic Swamp Fest</h1>
+  <p class="sub">La musica vive nella palude. Raccogli, costruisci, consegna.</p>
+
+  <details class="card" id="giocaPanel">
+    <summary><h2>▶ Gioca</h2></summary>
+    <div class="links" style="margin-bottom:12px">
+      <a class="alt" href="editor.html">🗺 Editor mappa</a>
+      <a class="alt" href="editor-3-4p.html">🗺 Editor mappa 3p</a>
+      <a class="alt" href="editor-4p.html">🗺 Editor mappa 4p</a>
+      <a class="alt" href="viewer.html">🔁 Viewer replay</a>
+    </div>
+    <p id="boardOverrideNote" class="sub" style="display:none;margin:0 0 12px"></p>
+    <iframe id="gameFrame" style="width:100%;height:85vh;border:0;border-radius:12px" title="Psycadelic Swamp Fest"></iframe>
+  </details>
+
+  <details class="card" open>
+    <summary><h2>Festival Economy</h2></summary>
+    <p class="sub" style="margin:0 0 12px">Editor del mazzo carte e del mercato — quello che modifichi qui vale per Simulatore batch e Matrice qui sotto. Un'unica configurazione, condivisa da 2/3/4 giocatori: il numero di giocatori si sceglie nel Simulatore batch qui sotto.</p>
+    <div id="deckEditor" class="deckwrap"></div>
+    <div class="lvltitle" style="margin-top:18px">Setup partita</div>
+    <div class="lvltitle" style="margin-top:18px">Pesca da mazzo <span style="color:var(--muted);font-weight:400;font-size:12px">— per numero di giocatori: il Simulatore batch usa la riga della composizione scelta lì sotto.</span></div>
+    <div class="row" style="gap:16px">
+      <table style="border-collapse:collapse"><tr>
+        <th></th><th style="padding:0 8px;color:var(--muted);font-weight:400">L1</th><th style="padding:0 8px;color:var(--muted);font-weight:400">L2</th><th style="padding:0 8px;color:var(--muted);font-weight:400">L3</th>
+      </tr>
+      <tr><td style="padding:0 8px;color:var(--muted)">2p</td><td style="padding:2px 8px"><input type="number" id="pesca-2-1" class="qty" value="4" min="0" step="1"></td><td style="padding:2px 8px"><input type="number" id="pesca-2-2" class="qty" value="4" min="0" step="1"></td><td style="padding:2px 8px"><input type="number" id="pesca-2-3" class="qty" value="4" min="0" step="1"></td></tr>
+      <tr><td style="padding:0 8px;color:var(--muted)">3p</td><td style="padding:2px 8px"><input type="number" id="pesca-3-1" class="qty" value="4" min="0" step="1"></td><td style="padding:2px 8px"><input type="number" id="pesca-3-2" class="qty" value="4" min="0" step="1"></td><td style="padding:2px 8px"><input type="number" id="pesca-3-3" class="qty" value="4" min="0" step="1"></td></tr>
+      <tr><td style="padding:0 8px;color:var(--muted)">4p</td><td style="padding:2px 8px"><input type="number" id="pesca-4-1" class="qty" value="4" min="0" step="1"></td><td style="padding:2px 8px"><input type="number" id="pesca-4-2" class="qty" value="4" min="0" step="1"></td><td style="padding:2px 8px"><input type="number" id="pesca-4-3" class="qty" value="4" min="0" step="1"></td></tr>
+      </table>
+    </div>
+    <div class="row">
+      <label>Carte esposte</label>
+      <input type="number" id="esposte" class="qty" value="3" min="1" step="1">
+      <label>Ordine mercato</label>
+      <select id="ordineMercato">
+        <option value="sequenziale">Sequenziale (L1→L2→L3)</option>
+        <option value="misto">Misto (1×L1+1×L2+1×L3 a rotazione)</option>
+        <option value="mescolato" selected>Tutto mescolato</option>
+      </select>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="risorsaGratisSecondo" checked> Vantaggio di partenza</label>
+      <span style="color:var(--muted);font-size:12px">— tutti tranne chi muove per primo prendono 1 risorsa attiva a scelta a inizio partita (compensa il first-player-advantage: 62%→51% nei test a 2p; a 3-4p ogni non-primo la riceve)</span>
+    </div>
+    <div class="lvltitle" style="margin-top:18px">Festival Collaborativo <span style="color:var(--muted);font-weight:400;font-size:12px">— quando un giocatore consegna, l'avversario può contribuire 1 risorsa fra quelle richieste per +PV</span></div>
+    <div class="row">
+      <label><input type="checkbox" id="festivalAbilitato" checked> Abilitato</label>
+      <label style="color:var(--muted);font-weight:400">ricompensa (PV)</label>
+      <input type="number" id="festivalPV" class="qty" value="2" min="0" step="1">
+    </div>
+    <div class="lvltitle" style="margin-top:18px">Lavoratore esclusivo <span style="color:var(--muted);font-weight:400;font-size:12px">— un nodo può ospitare un solo lavoratore alla volta (il festival resta sempre condiviso). Gli accampamenti restano condivisibili: la contesa si sposta su "chi ci sta sopra ORA", non su "chi ci ha costruito". Testato stabile 2-4p (0-0.2% stallo).</span></div>
+    <div class="row">
+      <label><input type="checkbox" id="lavoratoreEsclusivoAbilitato" checked> Abilitato</label>
+      <label style="color:var(--muted);font-weight:400"><input type="checkbox" id="capienza2Abilitato"> capienza 2 (invece di 1, sperimentale)</label>
+    </div>
+    <div class="lvltitle" style="margin-top:18px">Spostamento obbligatorio <span style="color:var(--muted);font-weight:400;font-size:12px">— sperimentale: non puoi restare/tornare sul nodo dove sei ORA. Vale anche per il festival: due consegne di fila richiedono un giro su un nodo in mezzo.</span></div>
+    <div class="row">
+      <label><input type="checkbox" id="spostamentoObbligatorioAbilitato"> Abilitato</label>
+    </div>
+    <div class="lvltitle" style="margin-top:18px">Limite segmenti totali <span style="color:var(--muted);font-weight:400;font-size:12px">— sperimentale: ogni giocatore può costruire al massimo N segmenti in TOTALE su tutto il tabellone (tutte le sue catene sommate, non una singola catena). Esaurito il limite, non può più costruire da nessuna parte.</span></div>
+    <div class="row">
+      <label><input type="checkbox" id="capSegmentiAbilitato"> Abilitato</label>
+      <label style="color:var(--muted);font-weight:400">massimo <input type="number" id="capSegmenti" class="qty" value="20" min="1" step="1"> segmenti totali</label>
+      <label style="color:var(--muted);font-weight:400"><input type="checkbox" id="fineSuLimiteSegmentiAbilitato"> finisci la partita quando un giocatore finisce gli accampamenti</label>
+    </div>
+    <div class="lvltitle" style="margin-top:18px">Bonus risorse finale <span style="color:var(--muted);font-weight:400;font-size:12px">— sperimentale: a fine partita, ogni N risorse rimaste in carico (avanzo scartato) valgono PV extra.</span></div>
+    <div class="row">
+      <label><input type="checkbox" id="bonusRisorseAbilitato"> Abilitato</label>
+      <label style="color:var(--muted);font-weight:400">ogni <input type="number" id="bonusRisorseN" class="qty" value="3" min="1" step="1"> risorse</label>
+      <label style="color:var(--muted);font-weight:400">→ <input type="number" id="bonusRisorsePV" class="qty" value="1" min="0" step="1"> PV</label>
+    </div>
+    <details style="margin-top:18px">
+      <summary class="lvltitle" style="display:inline-block;cursor:pointer">⚙ Importa/Esporta impostazioni</summary>
+      <p class="sub" style="margin:6px 0">Un solo setup (mazzo, setup partita, pozioni), indipendente dal numero di giocatori — esporta la config aperta ora, l'import lo applica a 2p/3p/4p. Come JSON copiabile/incollabile, nessun file da scaricare.</p>
+      <div class="row">
+        <button class="mini" id="esportaConfig">📤 Esporta in JSON</button>
+        <button class="mini" id="importaConfig">📥 Importa da JSON</button>
+        <button class="mini" id="copiaConfig">📋 Copia</button>
+      </div>
+      <textarea id="configJson" spellcheck="false" style="width:100%;min-height:180px;margin-top:8px;font-family:monospace;font-size:12px;background:#0f0f1a;color:var(--ink);border:1px solid var(--muted);border-radius:8px;padding:8px;box-sizing:border-box"></textarea>
+      <p id="configJsonStatus" class="sub" style="margin:4px 0 0"></p>
+    </details>
+  </details>
+
+  <div class="card">
+    <h2>Simulatore batch</h2>
+    <p class="sub" style="margin:0 0 12px">Gioca N partite AI vs AI e aggrega i risultati — per validare il simulatore su volumi, non per bilanciare.</p>
+    <div class="row">
+      <label>Partite</label>
+      <input type="number" id="nGames" value="500" min="1" max="5000" step="1">
+      <label>Seed iniziale</label>
+      <input type="number" id="seedStart" value="1" min="1" step="1">
+      <label>Primo giocatore</label>
+      <select id="primoGiocatore">
+        <option value="P1">Sempre P1</option>
+        <option value="P2">Sempre P2</option>
+        <option value="alterna">Alterna per partita</option>
+      </select>
+      <label>Giocatori</label>
+      <select id="nGiocatori">
+        <option value="2" selected>2 (tabellone standard)</option>
+        <option value="3">3 (tabellone grande)</option>
+        <option value="4">4 (tabellone grande)</option>
+      </select>
+    </div>
+    <div class="row" id="rigaPersonalita">
+      <label class="p1">Personalità P1</label>
+      <select id="persP1">
+        <option value="bilanciato">Bilanciato</option>
+        <option value="builder">Builder</option>
+        <option value="collector">Collector</option>
+        <option value="closer">Closer</option>
+      </select>
+      <label class="p2">Personalità P2</label>
+      <select id="persP2">
+        <option value="bilanciato">Bilanciato</option>
+        <option value="builder">Builder</option>
+        <option value="collector">Collector</option>
+        <option value="closer">Closer</option>
+      </select>
+      <label class="p3" id="labelPersP3" style="display:none">Personalità P3</label>
+      <select id="persP3" style="display:none">
+        <option value="bilanciato">Bilanciato</option>
+        <option value="builder">Builder</option>
+        <option value="collector">Collector</option>
+        <option value="closer">Closer</option>
+      </select>
+      <label class="p4" id="labelPersP4" style="display:none">Personalità P4</label>
+      <select id="persP4" style="display:none">
+        <option value="bilanciato">Bilanciato</option>
+        <option value="builder">Builder</option>
+        <option value="collector">Collector</option>
+        <option value="closer">Closer</option>
+      </select>
+    </div>
+    <div class="row" id="rigaIA">
+      <label class="p1">IA P1</label>
+      <select id="aiP1">
+        <option value="greedy">Greedy</option>
+        <option value="rollout" selected>Rollout</option>
+      </select>
+      <label class="p2">IA P2</label>
+      <select id="aiP2">
+        <option value="greedy">Greedy</option>
+        <option value="rollout" selected>Rollout</option>
+      </select>
+      <label class="p3" id="labelAiP3" style="display:none">IA P3</label>
+      <select id="aiP3" style="display:none">
+        <option value="greedy">Greedy</option>
+        <option value="rollout" selected>Rollout</option>
+      </select>
+      <label class="p4" id="labelAiP4" style="display:none">IA P4</label>
+      <select id="aiP4" style="display:none">
+        <option value="greedy">Greedy</option>
+        <option value="rollout" selected>Rollout</option>
+      </select>
+      <label style="color:var(--muted);font-weight:400">depth</label>
+      <input type="number" id="rolloutDepth" class="qty" value="6" min="1" step="1">
+      <label style="color:var(--muted);font-weight:400">rollouts</label>
+      <input type="number" id="rolloutN" class="qty" value="1" min="1" step="1">
+    </div>
+    <div class="row">
+      <button class="go" id="run">Simula</button>
+      <button class="mini" id="copy" style="display:none">📋 Copia report</button>
+      <button class="mini" id="download" style="display:none">💾 Scarica report</button>
+    </div>
+    <div id="status"></div>
+    <div id="progressWrap" style="display:none;margin:8px 0">
+      <div style="background:rgba(255,255,255,.08);border-radius:8px;height:10px;overflow:hidden">
+        <div id="progressBar" style="background:linear-gradient(90deg,#ff77e1,#ffd166,#6fffd1);height:100%;width:0%"></div>
+      </div>
+      <p id="progressText" style="color:var(--muted);font-size:12px;margin:6px 0 0"></p>
+    </div>
+    <div id="result"></div>
+    <div class="lvltitle" style="margin-top:18px">Report differenziale <span style="color:var(--muted);font-weight:400;font-size:12px">— confronta due run del Simulatore batch fatte in questa sessione (ogni "Simula" viene salvato in automatico).</span></div>
+    <div class="row">
+      <label style="color:var(--muted);font-weight:400">A</label><select id="diffA"></select>
+      <label style="color:var(--muted);font-weight:400">B</label><select id="diffB"></select>
+      <button class="mini" id="diffRun">Confronta</button>
+      <button class="mini" id="diffCopy" style="display:none">📋 Copia</button>
+    </div>
+    <div id="diffResult"></div>
+  </div>
+
+  <details class="card">
+    <summary><h2>Esperimenti (E-007, E-008, E-009, Matrice personalità)</h2></summary>
+    <p class="sub" style="margin:0 0 12px">Analisi esplorative fatte durante lo sviluppo — per ora poco utili al bilanciamento corrente, tenute qui compresse per non occupare spazio.</p>
+
+    <div class="lvltitle">Esperimento E-007 — Timeline del vantaggio</div>
+    <p class="sub" style="margin:0 0 4px"><b>Domanda</b> — quando nasce il vantaggio del primo giocatore, non solo se esiste?</p>
+    <p class="sub" style="margin:0 0 4px"><b>Ipotesi</b> — lo scarto (PV/costruzioni/risorse/commesse) cresce presto e resta, non emerge nel finale.</p>
+    <p class="sub" style="margin:0 0 12px"><b>Metriche</b> — scarto Primo−Secondo ogni 5 turni, mediato su N partite (usa Partite/Seed/Primo giocatore del Simulatore batch qui sopra: per isolare l'effetto-turno serve "Alterna").</p>
+    <div class="row">
+      <button class="go" id="runTimeline">Esegui timeline</button>
+      <button class="mini" id="copyTimeline" style="display:none">📋 Copia</button>
+      <button class="mini" id="downloadTimeline" style="display:none">💾 Scarica</button>
+    </div>
+    <div id="statusTimeline"></div>
+    <div id="resultTimeline"></div>
+
+    <div class="lvltitle" style="margin-top:18px">Esperimento E-008 — Punto di non ritorno</div>
+    <p class="sub" style="margin:0 0 4px"><b>Domanda</b> — in che turno il vantaggio diventa definitivo, non solo quando nasce?</p>
+    <p class="sub" style="margin:0 0 4px"><b>Ipotesi</b> — (da falsificare) il gioco resta aperto a lungo: il sorpasso finale non è deciso presto.</p>
+    <p class="sub" style="margin:0 0 12px"><b>Metrica</b> — per ogni partita: ultimo turno in cui il vincitore finale era ancora sotto o pari; il turno successivo è il "punto di non ritorno". Istogramma su N partite.</p>
+    <div class="row">
+      <button class="go" id="runNonRitorno">Esegui</button>
+      <button class="mini" id="copyNonRitorno" style="display:none">📋 Copia</button>
+      <button class="mini" id="downloadNonRitorno" style="display:none">💾 Scarica</button>
+    </div>
+    <div id="statusNonRitorno"></div>
+    <div id="resultNonRitorno"></div>
+
+    <div class="lvltitle" style="margin-top:18px">E-009 — Costo opportunità del contributo</div>
+    <p class="sub" style="margin:0 0 4px"><b>Domanda</b> — contribuire al festival ritarda la prossima consegna di chi contribuisce?</p>
+    <p class="sub" style="margin:0 0 4px"><b>Metrica</b> — per ogni contributo: turni fino alla consegna successiva di quel giocatore, confrontati con la sua media personale nella stessa partita (baseline).</p>
+    <p class="sub" style="margin:0 0 12px"><b>Attenzione</b> — è <b>correlazione, non causa</b>: non rigioco la stessa partita "senza quel contributo" (servirebbe un replay controfattuale che non esiste ancora). Se un giocatore contribuisce spesso proprio quando ha risorse in eccesso tra una consegna e l'altra, il confronto è distorto da quello, non dal contributo in sé.</p>
+    <div class="row">
+      <button class="go" id="runCosto">Esegui (200 partite)</button>
+      <button class="mini" id="copyCosto" style="display:none">📋 Copia</button>
+      <button class="mini" id="downloadCosto" style="display:none">💾 Scarica</button>
+    </div>
+    <div id="statusCosto"></div>
+    <div id="resultCosto"></div>
+
+    <div class="lvltitle" style="margin-top:18px">Matrice personalità</div>
+    <p class="sub" style="margin:0 0 12px">Fa girare tutti i matchup tra personalità (usando partite/seed qui sopra) e confronta le firme statistiche — nessuna euristica nuova, solo osservazione.</p>
+    <div class="row">
+      <button class="go" id="runMatrix">Confronta tutte le personalità</button>
+      <button class="mini" id="copyMatrix" style="display:none">📋 Copia tabella</button>
+      <button class="mini" id="downloadMatrix" style="display:none">💾 Scarica tabella</button>
+    </div>
+    <div id="statusMatrix"></div>
+    <div id="resultMatrix"></div>
+  </details>
+</main>
+<script type="module">
+import { makeBoard, generaCarte, rng, vicini, vincitore, POZIONE_DEFAULT_MODO } from './engine.js?v=3';
+import { partita, PERSONALITA } from './bot.js?v=3';
+
+const el = (id) => document.getElementById(id);
+async function salva(nome, blob, tipo, ext) {
+  if (window.showSaveFilePicker) {
+    try {
+      const h = await window.showSaveFilePicker({ suggestedName: nome, types: [{ description: tipo, accept: { [tipo]: [ext] } }] });
+      const w = await h.createWritable(); await w.write(blob); await w.close(); return;
+    } catch (e) { if (e.name === 'AbortError') return; }   // utente ha annullato
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; a.click(); URL.revokeObjectURL(a.href);
+}
+// carica game.html nell'iframe solo alla prima apertura; lo scarica alla chiusura
+// (altrimenti il loop dell'AI resta attivo in background anche a pannello chiuso)
+el('giocaPanel').addEventListener('toggle', () => {
+  const frame = el('gameFrame'), cur = frame.getAttribute('src');
+  // 'about:blank', non '': src='' si risolve all'URL della pagina corrente (l'iframe ricarica se stesso)
+  frame.src = el('giocaPanel').open ? (cur && cur !== 'about:blank' ? cur : 'game.html?v=10') : 'about:blank';
+});
+
+// 3 board fisiche separate: 2p (standard), 3p (grande, 6 nodi), 4p (grande + 2 nodi "tessera
+// extra" su arancio/verde, editabile a parte in editor-4p.html). Vedi genboard.js per l'origine
+// della 3p.
+// mappa modificata negli editor e salvata con "Usa nel simulatore" (localStorage, vedi editor*.html)
+// ha priorità sul file su disco — così non serve scaricare+spostare il JSON a mano.
+function loadBoardJSON(localKey, file) {
+  const cached = localStorage.getItem(localKey);
+  if (cached) { try { return Promise.resolve(JSON.parse(cached)); } catch {} }
+  return fetch(file).then((r) => r.json());
+}
+function aggiornaBoardOverrideNote() {
+  const attive = ['2p', '3p', '4p'].filter((k) => localStorage.getItem('swampBoard:' + k));
+  const nota = el('boardOverrideNote');
+  if (!attive.length) { nota.style.display = 'none'; return; }
+  nota.style.display = '';
+  nota.innerHTML = `🗺 Mappa modificata in uso (non il file su disco): ${attive.join(', ')} — `
+    + `<a href="#" id="resetBoardOverride" style="color:#7cc6ff">ripristina i file originali</a>`;
+  el('resetBoardOverride').onclick = (e) => {
+    e.preventDefault();
+    for (const k of attive) localStorage.removeItem('swampBoard:' + k);
+    location.reload();
+  };
+}
+aggiornaBoardOverrideNote();
+let board2p, board3p, board4p, board, cfg;
+// storico run del Simulatore batch, per il report differenziale (confronta due config). In memoria
+// only — si perde al reload, non serve persisterlo: è pensato per il confronto A/B nella sessione corrente.
+const batchHistory = [];
+Promise.all([
+  loadBoardJSON('swampBoard:2p', 'board.json'),
+  loadBoardJSON('swampBoard:3p', 'board-3-4p.json'),
+  loadBoardJSON('swampBoard:4p', 'board-4p.json'),
+  fetch('festival.json').then(r => r.json()),
+]).then(([bd2, bd3, bd4, fc]) => {
+    board2p = makeBoard(bd2); board3p = makeBoard(bd3); board4p = makeBoard(bd4); board = board2p; cfg = fc;
+    // mazzo + tutte le regole già in `config` (DEFAULT_CONFIG) — sincronizza solo il DOM di setup
+    // partita/festival/pozioni (i campi statici in HTML sono solo placeholder).
+    caricaConfigInDom();
+    renderDeckEditor(); // niente sincronizzaPescate qui: il default (3/3/3) non deve seguire la dimensione del mazzo
+    [2, 3, 4].flatMap((n) => [1, 2, 3].map((liv) => `pesca-${n}-${liv}`)).forEach((id) => el(id).addEventListener('input', () => { config.pescateManuali = true; }));
+  });
+const boardAttuale = () => { const n = +el('nGiocatori').value; return n === 4 ? board4p : n === 3 ? board3p : board2p; };
+
+function mostraP3P4(n) {
+  for (const p of ['3', '4']) {
+    const show = n >= +p;
+    el('labelPersP' + p).style.display = show ? '' : 'none';
+    el('persP' + p).style.display = show ? '' : 'none';
+    el('labelAiP' + p).style.display = show ? '' : 'none';
+    el('aiP' + p).style.display = show ? '' : 'none';
+  }
+}
+el('nGiocatori').addEventListener('change', () => mostraP3P4(+el('nGiocatori').value));
+
+const CARTA = { rosa: 'girasole', arancio: 'tartaruga', verde: 'fungo_marrone', giallo: 'cactus' };
+// health check: "parametri vitali" del design, tarati sul comportamento base osservato in questa
+// sessione (2-4p, senza regole sperimentali). Sono un punto di partenza, non un dogma — se cambi
+// intenzionalmente il design (es. accampamentiMax accorcia la partita), aggiorna i target qui.
+// Turni/Contributi normalizzati per numero di giocatori (target indipendenti da N): turni totali e
+// tasso contributi grezzo dipendono da quanti giocatori si alternano/possono contribuire, quindi un
+// batch 2p e uno 4p non erano confrontabili sugli stessi target assoluti — vedi healthCheck().
+const HEALTH_TARGETS = {
+  'Turni per giocatore': { min: 20, max: 32 },
+  'Inventario finale medio': { max: 10 },
+  'Spreco risorse (%)': { min: 10, max: 25 },
+  'Costruzioni/accampamento': { min: 2, max: 3 },
+  'Rete finale (segmenti/accampamento)': { min: 2, max: 3 },
+  'Contributi Festival (% capacità)': { min: 60, max: 95 },
+  'Stabilità leader a turno 20 (%)': { min: 50, max: 70 },
+  'Cambi leader medi': { min: 1 },
+  'Carte invendute': { max: 2 },
+  'Prima consegna L3 (turno)': { min: 20, max: 60 },
+  'Scarto winrate per posizione (%)': { max: 10 },
+};
+const RISORSE = Object.values(CARTA);
+const RIS_EMOJI = { girasole: '🌻', tartaruga: '🐢', fungo_marrone: '🍄‍🟫', cactus: '🌵' };
+
+// --- Festival Economy: 3 configurazioni indipendenti (2/3/4 giocatori), ciascuna col proprio
+// mazzo carte editabile + setup partita + festival collaborativo. UN'unica config, condivisa da
+// 2/3/4 giocatori — il numero di giocatori si sceglie solo nel Simulatore batch (select #nGiocatori).
+// Config di default esportata/rivista a mano dall'utente (mazzo 12 carte/livello + tutte le regole).
+const DEFAULT_CONFIG = {"mazzo":{"1":[{"need":{"girasole":2,"tartaruga":0,"fungo_marrone":0,"cactus":1},"punti":5,"pozione":"trasmutazione"},{"need":{"girasole":0,"tartaruga":2,"fungo_marrone":1,"cactus":0},"punti":5,"pozione":"trasmutazione"},{"need":{"girasole":0,"tartaruga":1,"fungo_marrone":2,"cactus":0},"punti":5,"pozione":"trasmutazione"},{"need":{"girasole":1,"tartaruga":0,"fungo_marrone":0,"cactus":2},"punti":5,"pozione":"trasmutazione"},{"need":{"girasole":2,"tartaruga":1,"fungo_marrone":0,"cactus":0},"punti":5,"pozione":"salto"},{"need":{"girasole":2,"tartaruga":0,"fungo_marrone":1,"cactus":0},"punti":5,"pozione":"salto"},{"need":{"girasole":1,"tartaruga":2,"fungo_marrone":0,"cactus":0},"punti":5,"pozione":"omissione"},{"need":{"girasole":0,"tartaruga":2,"fungo_marrone":0,"cactus":1},"punti":5,"pozione":"omissione"},{"need":{"girasole":0,"tartaruga":0,"fungo_marrone":2,"cactus":1},"punti":5,"pozione":"salto"},{"need":{"girasole":1,"tartaruga":0,"fungo_marrone":2,"cactus":0},"punti":5,"pozione":"salto"},{"need":{"girasole":0,"tartaruga":1,"fungo_marrone":0,"cactus":2},"punti":5,"pozione":"omissione"},{"need":{"girasole":0,"tartaruga":0,"fungo_marrone":1,"cactus":2},"punti":5,"pozione":"omissione"}],"2":[{"need":{"girasole":2,"tartaruga":2,"fungo_marrone":1,"cactus":0},"punti":9,"pozione":"abbondanza"},{"need":{"girasole":2,"tartaruga":2,"fungo_marrone":0,"cactus":1},"punti":9,"pozione":"abbondanza"},{"need":{"girasole":1,"tartaruga":2,"fungo_marrone":2,"cactus":0},"punti":9,"pozione":"abbondanza"},{"need":{"girasole":0,"tartaruga":2,"fungo_marrone":2,"cactus":1},"punti":9,"pozione":"abbondanza"},{"need":{"girasole":0,"tartaruga":1,"fungo_marrone":2,"cactus":2},"punti":9,"pozione":"abbondanza"},{"need":{"girasole":1,"tartaruga":0,"fungo_marrone":2,"cactus":2},"punti":9,"pozione":"abbondanza"},{"need":{"girasole":2,"tartaruga":1,"fungo_marrone":2,"cactus":0},"punti":9,"pozione":"crescita"},{"need":{"girasole":2,"tartaruga":0,"fungo_marrone":2,"cactus":1},"punti":9,"pozione":"crescita"},{"need":{"girasole":1,"tartaruga":2,"fungo_marrone":0,"cactus":2},"punti":9,"pozione":"crescita"},{"need":{"girasole":0,"tartaruga":2,"fungo_marrone":1,"cactus":2},"punti":9,"pozione":"crescita"},{"need":{"girasole":2,"tartaruga":1,"fungo_marrone":0,"cactus":2},"punti":9,"pozione":"crescita"},{"need":{"girasole":2,"tartaruga":0,"fungo_marrone":1,"cactus":2},"punti":9,"pozione":"crescita"}],"3":[{"need":{"girasole":2,"tartaruga":2,"fungo_marrone":2,"cactus":1},"punti":13,"pozione":"visione"},{"need":{"girasole":2,"tartaruga":2,"fungo_marrone":1,"cactus":2},"punti":13,"pozione":"euforia"},{"need":{"girasole":2,"tartaruga":1,"fungo_marrone":2,"cactus":2},"punti":13,"pozione":"visione"},{"need":{"girasole":1,"tartaruga":2,"fungo_marrone":2,"cactus":2},"punti":13,"pozione":"euforia"},{"need":{"girasole":2,"tartaruga":2,"fungo_marrone":2,"cactus":1},"punti":13,"pozione":"euforia"},{"need":{"girasole":2,"tartaruga":2,"fungo_marrone":1,"cactus":2},"punti":13,"pozione":"visione"},{"need":{"girasole":2,"tartaruga":1,"fungo_marrone":2,"cactus":2},"punti":13,"pozione":"euforia"},{"need":{"girasole":1,"tartaruga":2,"fungo_marrone":2,"cactus":2},"punti":13,"pozione":"visione"},{"need":{"girasole":2,"tartaruga":2,"fungo_marrone":2,"cactus":1},"punti":13,"pozione":"visione"},{"need":{"girasole":2,"tartaruga":2,"fungo_marrone":1,"cactus":2},"punti":13,"pozione":"euforia"},{"need":{"girasole":2,"tartaruga":1,"fungo_marrone":2,"cactus":2},"punti":13,"pozione":"visione"},{"need":{"girasole":1,"tartaruga":2,"fungo_marrone":2,"cactus":2},"punti":13,"pozione":"euforia"}]},"pescateManuali":true,"pescatePerN":{"2":{"1":4,"2":4,"3":4},"3":{"1":4,"2":4,"3":4},"4":{"1":4,"2":4,"3":4}},"esposte":3,"mercato":"mescolato","risorsaGratisSecondo":true,"festivalAbilitato":false,"festivalPV":3,"lavoratoreEsclusivoAbilitato":true,"capienza2Abilitato":false,"spostamentoObbligatorioAbilitato":false,"capSegmentiAbilitato":false,"capSegmenti":12,"fineSuLimiteSegmentiAbilitato":false,"bonusRisorseAbilitato":true,"bonusRisorseN":3,"bonusRisorsePV":1,"pozioniAbilitate":{"crescita":true,"abbondanza":true,"trasmutazione":true,"omissione":true,"salto":true,"convergenza":false,"visione":true,"euforia":true,"crescita2":false},"pozioniModo":{"omissione":"multiuso","salto":"multiuso","trasmutazione":"multiuso","abbondanza":"multiuso","crescita":"multiuso","crescita2":"ricaricabile","visione":"oneshot","euforia":"oneshot","convergenza":"oneshot"}};
+const cloneConfig = (c) => JSON.parse(JSON.stringify(c));
+const config = cloneConfig(DEFAULT_CONFIG);
+const mazzo = config.mazzo; // stesso oggetto di config.mazzo: leggere/scrivere mazzo[liv] muta config direttamente
+
+function nuovaCartaVuota() { return { need: Object.fromEntries(RISORSE.map((r) => [r, 0])), punti: 5, pozione: null }; }
+
+// somma di una colonna (risorsa, o 'punti') su tutte le carte di un livello — per bilanciare il
+// mazzo: quante unità di ogni risorsa richiede in totale L1/L2/L3.
+function sommaColonna(liv, chiave) {
+  return mazzo[liv].reduce((s, c) => s + (chiave === 'punti' ? c.punti : (c.need[chiave] || 0)), 0);
+}
+
+// tutte le combinazioni con ripetizione di `k` risorse tra `tipi` (multiset, ordine ignorato).
+// Simmetrico per costruzione: ogni risorsa compare lo stesso numero di volte in totale sull'insieme
+// completo — non serve bilanciare a parte, generare tutto è già bilanciato.
+function multiset(k, tipi, start = 0, cur = []) {
+  if (k === 0) return [cur];
+  let out = [];
+  for (let i = start; i < tipi.length; i++) out = out.concat(multiset(k - 1, tipi, i, [...cur, tipi[i]]));
+  return out;
+}
+
+// round-robin di default per livello: usato solo per pre-assegnare una pozione sensata alle carte
+// appena generate/aggiunte — dopo, l'assegnazione è libera (menu a tendina per carta).
+const POZIONE_LIVELLI = { 1: ['omissione', 'salto', 'trasmutazione'], 2: ['abbondanza', 'crescita', 'crescita2'], 3: ['visione', 'euforia'] };
+function generaTutteCombinazioni(liv) {
+  const k = cfg.livelli[liv].risorse;
+  const punti = cfg.livelli[liv].punti;
+  const rr = POZIONE_LIVELLI[liv];
+  mazzo[liv] = multiset(k, RISORSE).map((combo, i) => {
+    const need = Object.fromEntries(RISORSE.map((r) => [r, 0]));
+    for (const r of combo) need[r]++;
+    return { need, punti, pozione: rr[i % rr.length] };
+  });
+}
+
+const POZIONE_NOMI = { omissione: '👻 Omissione', salto: '🐸 Salto', trasmutazione: '🔮 Trasmutazione', abbondanza: '🌾 Abbondanza', crescita: '🌱 Crescita', crescita2: '🌳 Crescita 2', visione: '👁️ Visione', euforia: '🎉 Euforia', convergenza: '✨ Convergenza' };
+// descrizione in poche parole, mostrata accanto al nome nella lista Pozioni e nel menu per-carta.
+const POZIONE_DESC = {
+  omissione: 'L1 — ignora 1 risorsa mancante, gratis',
+  salto: 'L1 — ignora l\'esclusività del nodo (lavoratore)',
+  trasmutazione: 'L1 — sostituisci 1 risorsa mancante pagando 2 di un\'altra',
+  abbondanza: 'L2 — +1 risorsa a scelta, senza doverla raccogliere',
+  crescita: 'L2 — costruisci un 2° segmento nella stessa azione, stesso nodo',
+  crescita2: 'L2 — 2° segmento in un ALTRO nodo dove hai già un accampamento',
+  visione: 'L3 — raccolta gratis subito dopo una costruzione',
+  euforia: 'L3 — costruzione gratis subito dopo una raccolta',
+  convergenza: 'fuori mazzo di default — consegna 2 carte in una sola azione (selezionabile a mano per carta)',
+};
+function renderDeckEditor() {
+  const box = el('deckEditor');
+  // preserva aperto/chiuso di ogni livello tra un render e l'altro (add/del ricostruiscono l'HTML)
+  const aperti = new Set([...box.querySelectorAll('details[data-lvdetails]')].filter((d) => d.open).map((d) => d.dataset.lvdetails));
+  const pozAtt = config.pozioniAbilitate;
+  const opzioniPozione = (sel) => `<option value=""${sel ? '' : ' selected'}>—</option>`
+    + Object.entries(POZIONE_NOMI).map(([k, nome]) => `<option value="${k}"${sel === k ? ' selected' : ''}>${nome}</option>`).join('');
+  let html = `<div class="lvltitle" style="margin-bottom:6px">Pozioni <span style="color:var(--muted);font-weight:400;font-size:12px">— sperimentale: le commesse consegnate diventano poteri monouso invece di essere scartate. Spegni un tipo per escluderlo (le carte assegnate a quel tipo tornano commesse normali). L'assegnazione per carta è nell'editor dei livelli qui sotto.</span></div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">${Object.entries(POZIONE_NOMI).map(([k, nome]) =>
+      `<label style="display:flex;align-items:center;gap:8px;color:var(--muted)"><input type="checkbox" data-poz="${k}"${pozAtt[k] ? ' checked' : ''}> <span style="color:var(--ink);min-width:120px">${nome}</span> <span style="font-size:12px">${POZIONE_DESC[k]}</span> <select data-pozmodo="${k}" style="font-size:11px;margin-left:8px;padding:1px 4px"><option value="ricaricabile"${(config.pozioniModo?.[k]||'oneshot')==='ricaricabile'?' selected':''}>ricaricabile</option><option value="multiuso"${(config.pozioniModo?.[k]||'oneshot')==='multiuso'?' selected':''}>multiuso (non ricaricabile)</option><option value="oneshot"${(config.pozioniModo?.[k]||'oneshot')==='oneshot'?' selected':''}>oneshot</option></select></label>`).join('')}
+    </div>`;
+  for (const liv of [1, 2, 3]) {
+    html += `<details data-lvdetails="${liv}"${aperti.has(String(liv)) ? ' open' : ''}>
+      <summary class="lvltitle" style="display:inline-block;cursor:pointer">Livello ${liv} (${mazzo[liv].length} carte)</summary>
+      <table><tr><th>#</th>${RISORSE.map((r) => `<th>${RIS_EMOJI[r]}</th>`).join('')}<th>PV</th><th>Pozione</th><th></th></tr>`;
+    mazzo[liv].forEach((c, i) => {
+      html += `<tr><td>L${liv}-${i}</td>`;
+      for (const r of RISORSE) html += `<td><input type="number" class="qty" min="0" step="1" value="${c.need[r] || 0}" data-liv="${liv}" data-i="${i}" data-r="${r}"></td>`;
+      html += `<td><input type="number" class="pv" min="0" step="1" value="${c.punti}" data-liv="${liv}" data-i="${i}" data-pv="1"></td>`;
+      html += `<td><select data-liv="${liv}" data-i="${i}" data-cardpoz="1">${opzioniPozione(c.pozione)}</select></td>`;
+      html += `<td><button class="x" data-liv="${liv}" data-i="${i}" data-del="1">✕</button></td></tr>`;
+    });
+    html += `<tr class="tot-row" style="font-weight:600;border-top:2px solid var(--muted)"><td>Σ</td>`
+      + RISORSE.map((r) => `<td id="totL${liv}-${r}">${sommaColonna(liv, r)}</td>`).join('')
+      + `<td id="totL${liv}-pv">${sommaColonna(liv, 'punti')}</td><td></td><td></td></tr>`;
+    html += `</table><button class="mini" data-liv="${liv}" data-add="1">+ carta L${liv}</button>
+      <button class="mini" data-liv="${liv}" data-genall="1">⚙ Genera tutte le combinazioni</button></details>`;
+  }
+  box.innerHTML = html;
+  box.querySelectorAll('input[data-poz]').forEach((inp) => inp.addEventListener('change', (e) => {
+    config.pozioniAbilitate[e.target.dataset.poz] = e.target.checked;
+  }));
+  box.querySelectorAll('select[data-pozmodo]').forEach((sel) => sel.addEventListener('change', (e) => {
+    if (!config.pozioniModo) config.pozioniModo = {};
+    config.pozioniModo[e.target.dataset.pozmodo] = e.target.value;
+  }));
+  box.querySelectorAll('button[data-genall]').forEach((btn) => btn.addEventListener('click', (e) => {
+    // niente sincronizzaPescate qui: il pool cresce (20/56/120), ma quante se ne pescano a
+    // partita resta una scelta separata (mazzo pieno ≠ setup partita) — non forzarla a 196.
+    generaTutteCombinazioni(+e.target.dataset.liv); renderDeckEditor();
+  }));
+  box.querySelectorAll('input[data-r]').forEach((inp) => inp.addEventListener('input', (e) => {
+    const { liv, i, r } = e.target.dataset;
+    mazzo[liv][+i].need[r] = +e.target.value || 0;
+    el(`totL${liv}-${r}`).textContent = sommaColonna(liv, r);
+  }));
+  box.querySelectorAll('input[data-pv]').forEach((inp) => inp.addEventListener('input', (e) => {
+    const { liv, i } = e.target.dataset;
+    mazzo[liv][+i].punti = +e.target.value || 0;
+    el(`totL${liv}-pv`).textContent = sommaColonna(liv, 'punti');
+  }));
+  box.querySelectorAll('select[data-cardpoz]').forEach((sel) => sel.addEventListener('change', (e) => {
+    const { liv, i } = e.target.dataset;
+    mazzo[liv][+i].pozione = e.target.value || null;
+  }));
+  box.querySelectorAll('button[data-del]').forEach((btn) => btn.addEventListener('click', (e) => {
+    const { liv, i } = e.target.dataset;
+    mazzo[liv].splice(+i, 1); renderDeckEditor(); sincronizzaPescate();
+  }));
+  box.querySelectorAll('button[data-add]').forEach((btn) => btn.addEventListener('click', (e) => {
+    mazzo[e.target.dataset.liv].push(nuovaCartaVuota()); renderDeckEditor(); sincronizzaPescate();
+  }));
+}
+
+// tiene gli input "pesca da mazzo" allineati alla dimensione del mazzo, finché l'utente non li tocca a mano.
+// Default true: il default statico (3/3/3) non deve saltare a 6/6/6 al primo add/rimuovi carta.
+function sincronizzaPescate() {
+  if (config.pescateManuali) return;
+  for (const n of [2, 3, 4]) for (const liv of [1, 2, 3]) el(`pesca-${n}-${liv}`).value = mazzo[liv].length;
+}
+
+function mazzoFlat() {
+  const flat = [];
+  const pozAtt = config.pozioniAbilitate;
+  for (const liv of [1, 2, 3]) mazzo[liv].forEach((c) => {
+    // pozione assegnata per-carta nell'editor; se il tipo è spento dal menu Pozioni, torna commessa normale.
+    const pozione = c.pozione && pozAtt[c.pozione] ? c.pozione : null;
+    flat.push({ ...c, livello: liv, id: `L${liv}-${flat.length}`, pozione });
+  });
+  return flat;
+}
+
+// porta i valori DOM (setup partita + festival) dentro `config`
+function salvaDomInConfig() {
+  config.pescatePerN = Object.fromEntries([2, 3, 4].map((n) =>
+    [n, Object.fromEntries([1, 2, 3].map((liv) => [liv, +el(`pesca-${n}-${liv}`).value || 0]))]));
+  config.esposte = Math.max(1, +el('esposte').value || 3);
+  config.mercato = el('ordineMercato').value;
+  config.risorsaGratisSecondo = el('risorsaGratisSecondo').checked;
+  config.festivalAbilitato = el('festivalAbilitato').checked;
+  config.festivalPV = +el('festivalPV').value || 0;
+  config.lavoratoreEsclusivoAbilitato = el('lavoratoreEsclusivoAbilitato').checked;
+  config.capienza2Abilitato = el('capienza2Abilitato').checked;
+  config.spostamentoObbligatorioAbilitato = el('spostamentoObbligatorioAbilitato').checked;
+  config.capSegmentiAbilitato = el('capSegmentiAbilitato').checked;
+  config.capSegmenti = +el('capSegmenti').value || 20;
+  config.fineSuLimiteSegmentiAbilitato = el('fineSuLimiteSegmentiAbilitato').checked;
+  config.bonusRisorseAbilitato = el('bonusRisorseAbilitato').checked;
+  config.bonusRisorseN = +el('bonusRisorseN').value || 3;
+  config.bonusRisorsePV = +el('bonusRisorsePV').value || 1;
+}
+// porta `config` nel DOM (setup partita + festival) al caricamento o dopo un import
+function caricaConfigInDom() {
+  // pescatePerN è il formato nuovo; config.pescate (vecchi export/import) diventa il valore per tutte le N.
+  const perN = config.pescatePerN || { 2: config.pescate, 3: config.pescate, 4: config.pescate };
+  for (const n of [2, 3, 4]) for (const liv of [1, 2, 3]) el(`pesca-${n}-${liv}`).value = (perN[n] || perN[2])[liv];
+  el('esposte').value = config.esposte;
+  el('ordineMercato').value = config.mercato;
+  el('risorsaGratisSecondo').checked = config.risorsaGratisSecondo;
+  el('festivalAbilitato').checked = config.festivalAbilitato;
+  el('festivalPV').value = config.festivalPV;
+  el('lavoratoreEsclusivoAbilitato').checked = config.lavoratoreEsclusivoAbilitato;
+  el('capienza2Abilitato').checked = config.capienza2Abilitato;
+  el('spostamentoObbligatorioAbilitato').checked = !!config.spostamentoObbligatorioAbilitato;
+  el('capSegmentiAbilitato').checked = config.capSegmentiAbilitato;
+  el('capSegmenti').value = config.capSegmenti;
+  el('fineSuLimiteSegmentiAbilitato').checked = config.fineSuLimiteSegmentiAbilitato;
+  el('bonusRisorseAbilitato').checked = config.bonusRisorseAbilitato;
+  el('bonusRisorseN').value = config.bonusRisorseN;
+  el('bonusRisorsePV').value = config.bonusRisorsePV;
+}
+
+// import/export impostazioni: UN solo setup (mazzo + regole), indipendente dal numero di
+// giocatori — esporta la config, importa la applica (mazzo compreso). Niente file da scaricare,
+// vedi textarea #configJson nel pannello "Importa/Esporta impostazioni".
+el('esportaConfig').addEventListener('click', () => {
+  salvaDomInConfig(); // flush DOM → config prima di esportare
+  el('configJson').value = JSON.stringify(config, null, 2);
+  el('configJsonStatus').textContent = `Esportato (config ${new Date().toLocaleTimeString()}).`;
+});
+el('importaConfig').addEventListener('click', () => {
+  let parsed;
+  try { parsed = JSON.parse(el('configJson').value); }
+  catch (e) { el('configJsonStatus').textContent = `❌ JSON non valido: ${e.message}`; return; }
+  if (!parsed.mazzo) { el('configJsonStatus').textContent = `❌ Il JSON non ha un campo "mazzo".`; return; }
+  // muta `config`/`mazzo` sul posto invece di riassegnarli: altri riferimenti (es. `mazzo` è lo
+  // stesso oggetto di config.mazzo) resterebbero altrimenti agganciati alla versione vecchia.
+  const { mazzo: nuovoMazzo, ...resto } = cloneConfig(parsed);
+  Object.assign(config, resto);
+  for (const liv of [1, 2, 3]) mazzo[liv] = nuovoMazzo[liv] || [];
+  caricaConfigInDom();
+  renderDeckEditor();
+  el('configJsonStatus').textContent = `✓ Importato (${new Date().toLocaleTimeString()}).`;
+});
+el('copiaConfig').addEventListener('click', () => copiaTesto(el('configJson').value, el('copiaConfig'), '📋 Copia'));
+
+// API per game.html (iframe "Gioca"): allinea la partita umana alle stesse regole del Simulatore
+// batch — mazzo, pescate per N giocatori, lavoratore esclusivo, bonus risorse, vantaggio di
+// partenza, pozioni. Festival Collaborativo NON è incluso qui di proposito: richiede una UI di
+// contribuzione dedicata che game.html non ha ancora.
+window.psycadelicAPI = {
+  attive: () => CARTA,
+  setup: (nGiocatori) => letturaSetup(nGiocatori),
+};
+
+function letturaSetup(nGiocatori = 2) {
+  salvaDomInConfig(); // il DOM riflette sempre `config`: la persistiamo prima di leggerla
+  const depth = +el('rolloutDepth').value || 3, rollouts = +el('rolloutN').value || 8;
+  return {
+    mazzo: mazzoFlat(),
+    pescate: { 1: +el(`pesca-${nGiocatori}-1`).value || 0, 2: +el(`pesca-${nGiocatori}-2`).value || 0, 3: +el(`pesca-${nGiocatori}-3`).value || 0 },
+    esposte: Math.max(1, +el('esposte').value || 3),
+    mercato: el('ordineMercato').value,
+    aiP1: { modo: el('aiP1').value, depth, rollouts },
+    aiP2: { modo: el('aiP2').value, depth, rollouts },
+    primoGiocatoreSetting: el('primoGiocatore').value, // 'P1' | 'P2' | 'alterna' — risolto per-partita in runBatch
+    festivalCollab: { abilitato: el('festivalAbilitato').checked, ricompensaPV: +el('festivalPV').value || 0 },
+    risorsaGratisSecondo: el('risorsaGratisSecondo').checked,
+    lavoratoreEsclusivo: el('lavoratoreEsclusivoAbilitato').checked,
+    ...(el('lavoratoreEsclusivoAbilitato').checked && el('capienza2Abilitato').checked ? { capNodo: 2 } : {}),
+    spostamentoObbligatorio: el('spostamentoObbligatorioAbilitato').checked,
+    ...(el('capSegmentiAbilitato').checked ? { capSegmenti: +el('capSegmenti').value || 20 } : {}),
+    ...(el('capSegmentiAbilitato').checked && el('fineSuLimiteSegmentiAbilitato').checked ? { fineSuLimiteSegmenti: true } : {}),
+    ...(el('bonusRisorseAbilitato').checked ? { risorseVittoria: { risorse: +el('bonusRisorseN').value || 3, punti: +el('bonusRisorsePV').value || 1 } } : {}),
+    pozioniModo: { ...POZIONE_DEFAULT_MODO, ...(config.pozioniModo || {}) },
+  };
+}
+const NOME_AI = (ai) => ai.modo === 'rollout' ? `Rollout d${ai.depth} r${ai.rollouts}` : 'Greedy';
+
+// fingerprint della config (regole di gioco, NON seed/n partite): stesso hash tra due report =
+// stesse regole, cambia solo il campione statistico. Hash diverso = una regola è cambiata — utile
+// per non confondere "è cambiato il risultato" con "è cambiata la config".
+function configFingerprint(obj) {
+  const str = JSON.stringify(obj);
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8, '0').slice(0, 8);
+}
+
+const NOME_PRIMO = { P1: 'Sempre P1', P2: 'Sempre P2', alterna: 'Alterna per partita' };
+
+// health check: KPI riassuntivi con target (vedi HEALTH_TARGETS) — non nuove misure, solo una
+// lettura compatta di quelle già esistenti, per vedere in 10 righe se una modifica ha spostato il
+// gioco fuori dalla sua "zona di salute" invece di leggere l'intero report.
+function healthCheck(stats, giocatori) {
+  const tot = stats.turni.length || 1;
+  const rimaste = media(giocatori.flatMap((id) => stats.risorsePerGiocatore[id].rimaste));
+  const spreco = media(risorseSprecateReport(stats, giocatori).map((r) => r.pctSprecato));
+  const accTot = accampamentiPerGiocatore(stats, giocatori);
+  const costrTotSomma = giocatori.reduce((s, id) => s + stats.costruzioniPerGiocatore[id].reduce((s2, x) => s2 + x, 0), 0);
+  const accTotSomma = giocatori.reduce((s, id) => s + accTot[id], 0) || 1;
+  // contributi/apertura come % della capacità MASSIMA (ogni apertura può ricevere fino a N-1
+  // contributi, uno per ogni altro giocatore) — grezzo, 133% con 4p era un falso allarme: capacità
+  // reale è 300%, quindi 133% = 44% della capacità, non "oltre il 100%".
+  const tassoContributi = 100 * stats.festivalContributi.reduce((s, x) => s + x, 0)
+    / ((stats.festivalAperti.reduce((s, x) => s + x, 0) || 1) * Math.max(1, giocatori.length - 1));
+  const stab20 = stats.leaderStabilita.get(20);
+  const cambiLeader = media(stats.volatilitaLeadership.map((x) => x.cambi));
+  const primaL3 = cronologiaReport(stats.cronologia).find((r) => r.nome === '1ª consegna L3')?.turno ?? null;
+  const equo = 100 / giocatori.length;
+  const scartoWinrate = Math.max(...stats.vittoriePosizione.map((v) => Math.abs(100 * v / tot - equo)));
+  const rf = reteFinaleReport(stats);
+  const righe = [
+    { kpi: 'Turni per giocatore', valore: media(stats.turni) / giocatori.length },
+    { kpi: 'Inventario finale medio', valore: rimaste },
+    { kpi: 'Spreco risorse (%)', valore: spreco },
+    { kpi: 'Costruzioni/accampamento', valore: costrTotSomma / accTotSomma },
+    { kpi: 'Rete finale (segmenti/accampamento)', valore: rf.rapporto },
+    { kpi: 'Contributi Festival (% capacità)', valore: tassoContributi },
+    { kpi: 'Stabilità leader a turno 20 (%)', valore: stab20 ? 100 * stab20.stesso / stab20.totale : null },
+    { kpi: 'Cambi leader medi', valore: cambiLeader },
+    { kpi: 'Carte invendute', valore: stats.carteMaiVendute },
+    { kpi: 'Prima consegna L3 (turno)', valore: primaL3 },
+    { kpi: 'Scarto winrate per posizione (%)', valore: scartoWinrate },
+  ];
+  return righe.map((r) => {
+    const t = HEALTH_TARGETS[r.kpi];
+    const ok = r.valore == null || !t ? null : (t.min == null || r.valore >= t.min) && (t.max == null || r.valore <= t.max);
+    const target = t ? `${t.min != null ? '≥' + t.min : ''}${t.min != null && t.max != null ? '–' : ''}${t.max != null ? (t.min != null ? t.max : '≤' + t.max) : ''}` : '—';
+    return { ...r, ok, target };
+  });
+}
+
+function configBlock(mercatoOpts, giocatori, pkByPid, aiByPid) {
+  const { mazzo: m, pescate, esposte, mercato, primoGiocatoreSetting, festivalCollab, risorsaGratisSecondo, lavoratoreEsclusivo, capNodo, capSegmenti, fineSuLimiteSegmenti, risorseVittoria } = mercatoOpts;
+  const perLivello = (liv) => m.filter((c) => c.livello === liv);
+  const fp = configFingerprint({ mazzo: m.map(({ need, punti, livello }) => ({ need, punti, livello })), pescate, esposte, mercato, giocatori, pkByPid, aiByPid, primoGiocatoreSetting, festivalCollab, risorsaGratisSecondo, lavoratoreEsclusivo, capNodo, capSegmenti, fineSuLimiteSegmenti, risorseVittoria });
+  const L = ['█ CONFIGURAZIONE — fotografia dell\'esperimento',
+    `fingerprint  ${fp}   (stesso hash = stesse regole, cambia solo il seed/campione)`,
+    `Giocatori    ${giocatori.length} (${giocatori.join(', ')})`,
+    `Personalità  ${giocatori.map((id) => `${id}: ${NOME2(pkByPid[id])}`).join(' · ')}`,
+    `IA           ${giocatori.map((id) => `${id}: ${aiByPid[id] ? NOME_AI(aiByPid[id]) : 'Greedy'}`).join(' · ')}`,
+    `Primo mossa  ${NOME_PRIMO[primoGiocatoreSetting] || 'Sempre P1'} · vantaggio-partenza (non-primo): ${risorsaGratisSecondo ? '1 risorsa a scelta' : 'nessuno'}`,
+    `Mercato      ordine ${mercato} · ${esposte} carte esposte`,
+    `Festival     ${festivalCollab?.abilitato ? `Collaborativo ON, +${festivalCollab.ricompensaPV} PV a contributo (ogni altro giocatore ha un'occasione)` : 'Collaborativo OFF'}`,
+    `Lavoratore   ${lavoratoreEsclusivo ? `esclusivo (un nodo = max ${capNodo || 1} lavorator${(capNodo || 1) === 1 ? 'e' : 'i'} alla volta)` : 'condiviso (comportamento originale)'}`,
+    `Segmenti     ${capSegmenti != null ? `max ${capSegmenti} totali sul tabellone per giocatore${fineSuLimiteSegmenti ? ' — fine partita al primo che li esaurisce' : ''}` : 'illimitati (comportamento originale)'}`,
+    `Bonus risorse ${risorseVittoria ? `ogni ${risorseVittoria.risorse} risorse in carico a fine partita → +${risorseVittoria.punti} PV` : 'OFF'}`];
+  for (const liv of [1, 2, 3]) {
+    const pool = perLivello(liv), pv = pool.reduce((s, c) => s + c.punti, 0);
+    L.push(`Mazzo L${liv}      ${pool.length} carte disegnabili (PV totali pool ${pv}) · pescate in partita: ${pescate[liv]}`);
+  }
+  return L;
+}
+const NOME2 = (k) => ({ builder: 'Builder', collector: 'Collector', closer: 'Closer', bilanciato: 'Bilanciato' })[k] || k;
+
+// componenti connesse di state.built per proprietario = accampamenti distinti (le regole di
+// piazzamento impediscono a due catene dello stesso giocatore di toccarsi, tranne sul nodo — quindi
+// "stesso proprietario + adiacenti" identifica correttamente un solo accampamento, mai due fusi).
+function lunghezzeCatene(state) {
+  const owner = state.built;
+  const visitate = new Set();
+  const catene = Object.fromEntries(state.giocatori.map((g) => [g.id, []]));
+  for (const [k, pid] of owner) {
+    if (visitate.has(k)) continue;
+    const comp = new Set([k]), stack = [k];
+    while (stack.length) {
+      const cur = stack.pop();
+      const [q, r] = cur.split(',').map(Number);
+      for (const v of vicini(board, q, r)) {
+        const vk = `${v.q},${v.r}`;
+        if (owner.get(vk) === pid && !comp.has(vk)) { comp.add(vk); stack.push(vk); }
+      }
+    }
+    for (const kk of comp) visitate.add(kk);
+    catene[pid].push(comp.size);
+  }
+  return catene;
+}
+
+// tempo raccolta→consegna: per ogni consegna, distanza in turni dall'ultimo ingresso di risorse
+// dello STESSO giocatore (pesca, o pesca-su-build durante un costruisci — entrambe fanno entrare
+// risorse nel carico). Misura quanto le risorse restano "ferme" prima di essere spese.
+function accumulaRaccoltaConsegna(acc, log) {
+  const perGiocatore = new Map();
+  for (const e of log) { if (!perGiocatore.has(e.player)) perGiocatore.set(e.player, []); perGiocatore.get(e.player).push(e); }
+  for (const eventi of perGiocatore.values()) {
+    let ultimoIngresso = null;
+    for (const e of eventi) {
+      if (e.risorse > 0) ultimoIngresso = e.n;
+      if (e.tipo === 'consegna' && ultimoIngresso != null) acc.push(e.n - ultimoIngresso);
+    }
+  }
+}
+function raccoltaConsegnaReport(gaps) {
+  const bucket = { '1 turno': 0, '2 turni': 0, '3–5 turni': 0, '>5 turni': 0 };
+  for (const g of gaps) bucket[g <= 1 ? '1 turno' : g <= 2 ? '2 turni' : g <= 5 ? '3–5 turni' : '>5 turni']++;
+  return { media: media(gaps), n: gaps.length, bucket };
+}
+// valore dell'ultima consegna: turno, PV, e se è LETTERALMENTE l'ultima azione della partita (non
+// solo l'ultima consegna — dopo potrebbero esserci altre costruzioni/raccolte prima della fine).
+function accumulaUltimaConsegna(acc, log) {
+  const consegne = log.filter((e) => e.tipo === 'consegna');
+  if (!consegne.length) return;
+  const ultima = consegne[consegne.length - 1];
+  acc.push({ turno: ultima.n, pv: ultima.punti || 0, chiude: log[log.length - 1] === ultima });
+}
+function ultimaConsegnaReport(acc) {
+  return { turno: media(acc.map((x) => x.turno)), pv: media(acc.map((x) => x.pv)),
+    pctChiude: 100 * acc.filter((x) => x.chiude).length / (acc.length || 1), n: acc.length };
+}
+// pozioni (sperimentale): ottenute/usate/permanenza in mano, per tipo. state.giocatori[].pozioni
+// è già popolato dal motore (engine.consegnaMercato/gioca), qui solo si aggrega.
+// "valore alla vittoria": confronta, fra i giocatori che hanno OTTENUTO quel tipo in questa
+// partita, chi l'ha usata almeno una volta contro chi no — isola l'effetto del potere, non del
+// semplice aver consegnato una carta di quel livello (che i due gruppi hanno in comune).
+// accumulatore vuoto condiviso fra stats.pozioni[tipo] e stats.pozioniPerLivello[chiave] — stessa
+// forma, così pozioniReport()/pozioniPerLivelloReport() leggono i due con lo stesso codice.
+const nuovoAccPozione = () => ({ ottenute: 0, usate: 0, turniOttenimento: [], turniUtilizzo: [], permanenza: [], inutilizzate: 0,
+  partiteConUso: 0, pvConUso: [], vittorieConUso: 0, partiteSenzaUso: 0, pvSenzaUso: [], vittorieSenzaUso: 0,
+  usiPerPartita: [], risorseRicaricaPerPartita: [], caricheResiduePerPartita: [] });
+// chiave "livello|tipo": il campo pozione è indipendente dal livello (vedi engine.POZIONE_DEFAULT),
+// quindi il livello di una singola pozione OTTENUTA si legge dalla carta che l'ha generata, non dal
+// tipo — se in futuro la stessa pozione compare su più livelli, questa vista li separa comunque.
+function accumulaPozioni(stats, state, turniPartita, w, mazzoById) {
+  // g.pozioni è ora { [tipo]: { cariche, caricheMax, riserva, usiTotali, cartePrese, ... } }
+  for (const g of state.giocatori) {
+    const vince = w && w.id === g.id;
+    for (const [tipo, p] of Object.entries(g.pozioni)) {
+      const acc = stats.pozioni[tipo];
+      if (!acc) continue;
+      // livello da POZIONE_LIVELLI (non più da mazzoById.cartaId)
+      const liv = Object.entries(POZIONE_LIVELLI).find(([, tipi]) => tipi.includes(tipo))?.[0];
+      const accL = liv != null ? (stats.pozioniPerLivello.get(`${liv}|${tipo}`) || stats.pozioniPerLivello.set(`${liv}|${tipo}`, nuovoAccPozione()).get(`${liv}|${tipo}`)) : null;
+      for (const a of [acc, accL]) {
+        if (!a) continue;
+        a.ottenute += p.cartePrese;
+        if (p.ottenutaTurno != null) a.turniOttenimento.push(p.ottenutaTurno);
+        if (p.usiTotali > 0) {
+          a.usate++;
+          if (p.ultimoUsoTurno != null) a.turniUtilizzo.push(p.ultimoUsoTurno);
+          if (p.ottenutaTurno != null && p.ultimoUsoTurno != null) a.permanenza.push(p.ultimoUsoTurno - p.ottenutaTurno);
+        } else a.inutilizzate++;
+        a.usiPerPartita.push(p.usiTotali);
+        a.risorseRicaricaPerPartita.push(p.risorseRicarica || 0);
+        a.caricheResiduePerPartita.push(p.cariche + p.riserva * p.caricheMax);
+      }
+      const conUso = p.usiTotali > 0;
+      if (conUso) { acc.partiteConUso++; acc.pvConUso.push(g.punti); if (vince) acc.vittorieConUso++; }
+      else { acc.partiteSenzaUso++; acc.pvSenzaUso.push(g.punti); if (vince) acc.vittorieSenzaUso++; }
+      if (accL) {
+        if (conUso) { accL.partiteConUso++; accL.pvConUso.push(g.punti); if (vince) accL.vittorieConUso++; }
+        else { accL.partiteSenzaUso++; accL.pvSenzaUso.push(g.punti); if (vince) accL.vittorieSenzaUso++; }
+      }
+    }
+  }
+}
+function pozioniReport(stats) {
+  return Object.entries(stats.pozioni).map(([tipo, a]) => ({
+    tipo, ottenute: a.ottenute, usate: a.usate, pctUso: 100 * a.usate / (a.ottenute || 1),
+    turnoOttenimento: media(a.turniOttenimento), turnoUtilizzo: a.turniUtilizzo.length ? media(a.turniUtilizzo) : null,
+    permanenza: a.permanenza.length ? media(a.permanenza) : null, inutilizzate: a.inutilizzate,
+    winrateConUso: a.partiteConUso ? 100 * a.vittorieConUso / a.partiteConUso : null,
+    winrateSenzaUso: a.partiteSenzaUso ? 100 * a.vittorieSenzaUso / a.partiteSenzaUso : null,
+    pvConUso: a.pvConUso.length ? media(a.pvConUso) : null, pvSenzaUso: a.pvSenzaUso.length ? media(a.pvSenzaUso) : null,
+    nConUso: a.partiteConUso, nSenzaUso: a.partiteSenzaUso,
+    usiMedi: a.usiPerPartita.length ? media(a.usiPerPartita) : null,
+    risorseRicaricaMedi: a.risorseRicaricaPerPartita.length ? media(a.risorseRicaricaPerPartita) : null,
+    caricheResidueMedie: a.caricheResiduePerPartita.length ? media(a.caricheResiduePerPartita) : null,
+  }));
+}
+
+// swing della pozione: per ogni USO, PV/posizione un turno prima → 10 turni dopo. A differenza di
+// "valore alla vittoria" non guarda chi ha vinto la partita (niente bias "chi vince trova più
+// occasioni") — misura l'effetto immediato sullo sviluppo, censurando i casi dove la partita è
+// finita prima dei 10 turni di distanza (non "l'effetto è stato zero", sono dati mancanti).
+const rankAt = (snap, pid) => 1 + Object.entries(snap).filter(([id, p]) => id !== pid && p > snap[pid]).length;
+function accumulaSwingPozioni(stats, state, storiaPunti, turniPartita, mazzoById) {
+  // swing basato sull'ultimo uso (ultimoUsoTurno) — con ricaricabile = usa il turno dell'ultimo utilizzo
+  for (const g of state.giocatori) for (const [tipo, p] of Object.entries(g.pozioni)) {
+    if (p.usiTotali === 0 || p.ultimoUsoTurno == null) continue;
+    const acc = stats.pozioniSwing[tipo];
+    if (!acc) continue;
+    const tPrima = Math.max(0, p.ultimoUsoTurno - 1), tDopo = p.ultimoUsoTurno + 10;
+    if (tDopo > turniPartita) continue;
+    const snapPrima = storiaPunti[tPrima], snapDopo = storiaPunti[tDopo];
+    if (!snapPrima || !snapDopo) continue;
+    const deltaPV = snapDopo[g.id] - snapPrima[g.id];
+    const deltaRank = rankAt(snapPrima, g.id) - rankAt(snapDopo, g.id);
+    acc.deltaPV.push(deltaPV); acc.deltaRank.push(deltaRank);
+    const liv = Object.entries(POZIONE_LIVELLI).find(([, tipi]) => tipi.includes(tipo))?.[0];
+    if (liv == null) continue;
+    const key = `${liv}|${tipo}`;
+    const accL = stats.pozioniSwingPerLivello.get(key) || stats.pozioniSwingPerLivello.set(key, { deltaPV: [], deltaRank: [] }).get(key);
+    accL.deltaPV.push(deltaPV); accL.deltaRank.push(deltaRank);
+  }
+}
+function pozioniSwingReport(stats) {
+  return Object.entries(stats.pozioniSwing).map(([tipo, a]) => ({
+    tipo, n: a.deltaPV.length, deltaPV: a.deltaPV.length ? media(a.deltaPV) : null, deltaRank: a.deltaRank.length ? media(a.deltaRank) : null,
+  }));
+}
+// valore della pozione PER LIVELLO della commessa che l'ha generata: stessa pozione può comparire
+// solo dove il mazzo l'ha assegnata (di default 1 livello ciascuna), ma la vista regge anche se in
+// futuro la stessa pozione finisse su più livelli. Unisce uso+swing in un'unica riga per leggibilità.
+function pozioniPerLivelloReport(stats) {
+  const chiavi = new Set([...stats.pozioniPerLivello.keys(), ...stats.pozioniSwingPerLivello.keys()]);
+  return [...chiavi].map((key) => {
+    const [livello, tipo] = key.split('|');
+    const a = stats.pozioniPerLivello.get(key) || nuovoAccPozione();
+    const s = stats.pozioniSwingPerLivello.get(key) || { deltaPV: [], deltaRank: [] };
+    return {
+      livello: +livello, tipo, ottenute: a.ottenute, pctUso: a.ottenute ? 100 * a.usate / a.ottenute : null,
+      permanenza: a.permanenza.length ? media(a.permanenza) : null,
+      deltaPV: s.deltaPV.length ? media(s.deltaPV) : null, nSwing: s.deltaPV.length,
+      winrateConUso: a.partiteConUso ? 100 * a.vittorieConUso / a.partiteConUso : null, nConUso: a.partiteConUso,
+    };
+  }).sort((x, y) => x.livello - y.livello || x.tipo.localeCompare(y.tipo));
+}
+
+// economia delle azioni: distribuzione % del turno-tipo (ogni turno = ESATTAMENTE una di queste
+// azioni, il movimento non è un'azione a sé nel motore — muovi() è sempre parte di costruisci/
+// pesca/consegna). "Costruisci" qui è solo estensione di rete: i nuovi accampamenti (seed) sono
+// separati per non contarli due volte.
+function economiaAzioni(stats) {
+  const n = stats.turni.length || 1;
+  const nuovi = stats.accampamentiDettaglio.length / n;
+  const costrTot = media(stats.costruzioni);
+  const righe = [
+    { nome: 'Costruisci (rete)', media: Math.max(0, costrTot - nuovi) },
+    { nome: 'Nuovo accampamento', media: nuovi },
+    { nome: 'Pesca', media: media(stats.pesche) },
+    { nome: 'Consegna', media: media(stats.consegne) },
+  ];
+  if (stats.nodiFondati.some((x) => x > 0)) righe.push({ nome: 'Fonda nodo', media: media(stats.nodiFondati) });
+  const tot = righe.reduce((s, r) => s + r.media, 0) || 1;
+  return righe.map((r) => ({ ...r, pct: 100 * r.media / tot }));
+}
+
+// rendimento marginale del turno: accumula PV/risorse/accampamenti-aperti in bucket di 10 turni,
+// PER PARTITA — così si vede se il gioco accelera, resta piatto o rallenta verso il fondo.
+const BUCKET_TURNI = 10;
+function accumulaRendimentoTurno(mappa, log, turniPartita) {
+  const maxB = Math.floor((turniPartita - 1) / BUCKET_TURNI);
+  for (let b = 0; b <= maxB; b++) {
+    const r = mappa.get(b) || { pv: 0, risorse: 0, accampamenti: 0, partite: 0 };
+    r.partite++; mappa.set(b, r);
+  }
+  for (const e of log) {
+    const b = Math.floor((e.n - 1) / BUCKET_TURNI);
+    const r = mappa.get(b);
+    if (!r) continue;
+    if (e.tipo === 'consegna') r.pv += e.punti || 0;
+    if (e.tipo === 'pesca' || e.tipo === 'costruisci' || e.tipo === 'compraNodo') r.risorse += e.risorse || 0;
+    if (e.tipo === 'costruisci' && e.seed) r.accampamenti++;
+  }
+}
+function rendimentoTurnoReport(mappa) {
+  return [...mappa.entries()].sort((a, b) => a[0] - b[0]).map(([b, r]) => ({
+    range: `${b * BUCKET_TURNI + 1}-${(b + 1) * BUCKET_TURNI}`,
+    pv: r.pv / r.partite, risorse: r.risorse / r.partite, accampamenti: r.accampamenti / r.partite, partite: r.partite,
+  }));
+}
+
+// inventario medio per turno (bucket di 10, come rendimentoTurno): media per-giocatore delle
+// risorse in carico (g.droghe), campionata a ogni turno via onTurno. Dice se l'economia scorre
+// (inventario basso e stabile) o si accumula (mano piena, colli di bottiglia).
+function accumulaInventarioTurno(mappa, t, giocatoriState) {
+  if (t < 1) return; // t=0 è lo snapshot iniziale, prima di qualsiasi mossa — non un turno di gioco
+  const b = Math.floor((t - 1) / BUCKET_TURNI);
+  const mediaPerGiocatore = giocatoriState.reduce((s, g) => s + g.droghe.length, 0) / giocatoriState.length;
+  const r = mappa.get(b) || { tot: 0, n: 0 };
+  r.tot += mediaPerGiocatore; r.n++; mappa.set(b, r);
+}
+function inventarioTurnoReport(mappa) {
+  return [...mappa.entries()].sort((a, b) => a[0] - b[0]).map(([b, r]) => ({
+    range: `${b * BUCKET_TURNI + 1}-${(b + 1) * BUCKET_TURNI}`, media: r.tot / (r.n || 1), n: r.n,
+  }));
+}
+// accampamenti attivi nel tempo: quanti sono CONTEMPORANEAMENTE "vivi" a inizio bucket — aperti
+// (turnoApertura raggiunto) e non ancora abbandonati (ancora dentro la loro finestra di vita utile,
+// vedi tempoMortoPerOrdine). Curva di concorrenza, non di apertura cumulativa: può scendere.
+function accumulaAccampamentiAttivi(mappa, accGioco, turniPartita) {
+  const maxB = Math.floor((turniPartita - 1) / BUCKET_TURNI);
+  for (let b = 0; b <= maxB; b++) {
+    const checkpoint = b * BUCKET_TURNI + 1;
+    const attivi = accGioco.filter((c) => c.turnoApertura <= checkpoint && checkpoint <= c.turnoApertura + c.vitaUtile).length;
+    const r = mappa.get(b) || { tot: 0, n: 0 };
+    r.tot += attivi; r.n++; mappa.set(b, r);
+  }
+}
+function accampamentiAttiviReport(mappa) {
+  return [...mappa.entries()].sort((a, b) => a[0] - b[0]).map(([b, r]) => ({
+    range: `${b * BUCKET_TURNI + 1}-${(b + 1) * BUCKET_TURNI}`, media: r.tot / (r.n || 1), n: r.n,
+  }));
+}
+// stabilità del leader: se chi è in testa a un checkpoint vince quasi sempre, il gioco si decide
+// presto e un catch-up avrebbe senso; se il leader cambia spesso, la partita resta aperta da sola.
+function leaderStabilitaReport(mappa) {
+  return [...mappa.entries()].sort((a, b) => a[0] - b[0]).map(([turno, r]) => ({
+    turno, pctStesso: 100 * r.stesso / (r.totale || 1), n: r.totale,
+  }));
+}
+// volatilità della leadership: quante volte cambia mano il comando della partita (a livello dei
+// checkpoint di leaderStabilita) — complementare alla stabilità: quella dice "chi è avanti resta
+// avanti?", questa "quanto spesso il comando passa di mano?". Non richiede un vincitore: conta
+// anche le partite finite in pareggio.
+function volatilitaLeadershipReport(arr) {
+  const tot = arr.length || 1;
+  const conCambi = arr.filter((x) => x.cambi > 0);
+  const bucket = { '0 cambi': 0, '1 cambio': 0, '2–3 cambi': 0, '4+ cambi': 0 };
+  for (const x of arr) bucket[x.cambi === 0 ? '0 cambi' : x.cambi === 1 ? '1 cambio' : x.cambi <= 3 ? '2–3 cambi' : '4+ cambi']++;
+  return {
+    n: arr.length, mediaCambi: media(arr.map((x) => x.cambi)),
+    turnoPrimoCambio: conCambi.length ? media(conCambi.map((x) => x.primoCambio)) : null,
+    turnoUltimoCambio: conCambi.length ? media(conCambi.map((x) => x.ultimoCambio)) : null,
+    pctZeroCambi: 100 * bucket['0 cambi'] / tot, bucket, tot,
+  };
+}
+
+// azione successiva (stesso giocatore): quasi-Markov delle decisioni. "nuovo accampamento" è
+// separato da "costruisci" (estensione) perché sono decisioni molto diverse, anche se stesso tipo
+// di azione nel motore.
+const labelAzione = (e) => e.tipo === 'costruisci' ? (e.seed ? 'nuovo accampamento' : 'costruisci') : e.tipo;
+function accumulaTransizioni(mappa, log) {
+  const perGiocatore = new Map();
+  for (const e of log) { if (!perGiocatore.has(e.player)) perGiocatore.set(e.player, []); perGiocatore.get(e.player).push(e); }
+  for (const eventi of perGiocatore.values()) {
+    for (let i = 0; i < eventi.length - 1; i++) {
+      const da = labelAzione(eventi[i]), a = labelAzione(eventi[i + 1]);
+      const riga = mappa.get(da) || new Map();
+      riga.set(a, (riga.get(a) || 0) + 1);
+      mappa.set(da, riga);
+    }
+  }
+}
+function transizioniReport(mappa) {
+  const risultato = [];
+  for (const [da, riga] of mappa) {
+    const tot = [...riga.values()].reduce((s, x) => s + x, 0);
+    const dist = [...riga.entries()].sort((a, b) => b[1] - a[1]).map(([a, c]) => ({ a, pct: 100 * c / tot }));
+    risultato.push({ da, tot, dist });
+  }
+  return risultato.sort((a, b) => b.tot - a.tot);
+}
+
+// cronologia media della partita: turno medio a cui accadono i momenti chiave (1°/2°/... accampamento,
+// 1ª/2ª/... raccolta, 1ª consegna per livello, primo contributo festival, ultima consegna, fine).
+// Ogni lista è indicizzata per ordinale (globale, non per giocatore) e cresce solo fin dove i dati
+// arrivano — gli ordinali rari (es. il 9° accampamento) avranno n piccolo, va letto insieme a quello.
+function accumulaCronologia(acc, log, festivalEventi, turniPartita) {
+  const seeds = [...log].filter((e) => e.tipo === 'costruisci' && e.seed).sort((a, b) => a.n - b.n);
+  seeds.forEach((e, i) => (acc.accampamento[i] ||= []).push(e.n));
+  const pesche = [...log].filter((e) => e.tipo === 'pesca').sort((a, b) => a.n - b.n);
+  pesche.forEach((e, i) => (acc.raccolta[i] ||= []).push(e.n));
+  for (const liv of [1, 2, 3]) {
+    const first = log.find((e) => e.tipo === 'consegna' && e.livello === liv);
+    if (first) acc[`consegnaL${liv}`].push(first.n);
+  }
+  if (festivalEventi.length) acc.primoContributo.push(Math.min(...festivalEventi.map((e) => e.turno)));
+  const consegne = log.filter((e) => e.tipo === 'consegna');
+  if (consegne.length) acc.ultimaConsegna.push(Math.max(...consegne.map((e) => e.n)));
+  acc.finePartita.push(turniPartita);
+}
+function cronologiaReport(acc) {
+  const righe = [];
+  acc.accampamento.forEach((arr, i) => righe.push({ nome: `${i + 1}° accampamento`, turno: media(arr), n: arr.length }));
+  acc.raccolta.forEach((arr, i) => righe.push({ nome: `${i + 1}ª raccolta`, turno: media(arr), n: arr.length }));
+  for (const liv of [1, 2, 3]) if (acc[`consegnaL${liv}`].length)
+    righe.push({ nome: `1ª consegna L${liv}`, turno: media(acc[`consegnaL${liv}`]), n: acc[`consegnaL${liv}`].length });
+  if (acc.primoContributo.length) righe.push({ nome: 'primo contributo festival', turno: media(acc.primoContributo), n: acc.primoContributo.length });
+  if (acc.ultimaConsegna.length) righe.push({ nome: 'ultima consegna', turno: media(acc.ultimaConsegna), n: acc.ultimaConsegna.length });
+  righe.push({ nome: 'fine partita', turno: media(acc.finePartita), n: acc.finePartita.length });
+  return righe;
+}
+
+// --- Report differenziale: confronta due run salvate del Simulatore batch ---
+function rulesShort(o) {
+  const bits = [];
+  if (o.compraNodo) bits.push('fondaNodo');
+  if (!o.lavoratoreEsclusivo) bits.push('lavCondiviso'); else if (o.capNodo) bits.push(`cap${o.capNodo}`);
+  if (o.accampamentiMax != null) bits.push(`acc${o.accampamentiMax}`);
+  return bits.length ? bits.join(',') : 'base';
+}
+function salvaRunPerDiff(n, seedStart, giocatori, mercatoOpts, stats) {
+  const id = Date.now();
+  const label = `${giocatori.length}p·n${n}·${rulesShort(mercatoOpts)}·${new Date(id).toLocaleTimeString()}`;
+  batchHistory.push({ id, label, n, seedStart, giocatori, mercatoOpts, stats });
+  if (batchHistory.length > 20) batchHistory.shift();
+  popolaSelectDiff();
+}
+function popolaSelectDiff() {
+  for (const selId of ['diffA', 'diffB']) {
+    const sel = el(selId), prev = sel.value;
+    sel.innerHTML = batchHistory.map((r) => `<option value="${r.id}">${r.label}</option>`).join('');
+    if (batchHistory.some((r) => String(r.id) === prev)) sel.value = prev;
+  }
+  if (batchHistory.length >= 2) {
+    el('diffA').value = batchHistory[batchHistory.length - 2].id;
+    el('diffB').value = batchHistory[batchHistory.length - 1].id;
+  } else if (batchHistory.length === 1) {
+    el('diffB').value = batchHistory[0].id;
+  }
+}
+// A→B con delta assoluto e %. pct indefinito quando A=0 e B≠0 (evita divisione per zero silenziosa).
+function fmtDelta(a, b, decimali = 1, unit = '') {
+  const d = b - a, segno = d > 0 ? '+' : '';
+  const pct = a !== 0 ? `${segno}${(100 * d / Math.abs(a)).toFixed(0)}%` : (d === 0 ? '0%' : 'n/d');
+  return `${a.toFixed(decimali)}${unit} → ${b.toFixed(decimali)}${unit} (${segno}${d.toFixed(decimali)}${unit}, ${pct})`;
+}
+function diffReport(rA, rB) {
+  const L = [`CONFRONTO — A: ${rA.label}  vs  B: ${rB.label}`, ''];
+  const totA = rA.stats.turni.length || 1, totB = rB.stats.turni.length || 1;
+  L.push('METRICHE GENERALI',
+    `  Turni medi: ${fmtDelta(media(rA.stats.turni), media(rB.stats.turni))}`,
+    `  Winrate primo giocatore: ${fmtDelta(100*rA.stats.vittoriePosizione[0]/totA, 100*rB.stats.vittoriePosizione[0]/totB, 0, '%')}`,
+    `  Pareggi: ${fmtDelta(100*rA.stats.pareggiPosizione/totA, 100*rB.stats.pareggiPosizione/totB, 0, '%')}`,
+    `  PV medi (tutti i giocatori): ${fmtDelta(media(rA.giocatori.flatMap((id) => rA.stats.pv[id])), media(rB.giocatori.flatMap((id) => rB.stats.pv[id])))}`,
+    `  Scarto PV medio: ${fmtDelta(media(rA.stats.scarto), media(rB.stats.scarto))}`,
+    `  Festival PV/partita: ${fmtDelta(media(rA.stats.festivalPV), media(rB.stats.festivalPV))}`,
+    `  Fine per accampamenti esauriti: ${fmtDelta(100*rA.stats.fineMotivo.accampamenti/totA, 100*rB.stats.fineMotivo.accampamenti/totB, 0, '%')}`);
+  L.push('', 'ECONOMIA DELLE AZIONI (%)');
+  const eA = economiaAzioni(rA.stats), eB = economiaAzioni(rB.stats);
+  for (const ra of eA) { const rb = eB.find((x) => x.nome === ra.nome); if (rb) L.push(`  ${ra.nome}: ${fmtDelta(ra.pct, rb.pct, 0, '%')}`); }
+  L.push('', 'CONSEGNE DISPONIBILI IGNORATE (% colte sulle disponibili)',
+    `  ${fmtDelta(100*rA.stats.opportunita.colte/(rA.stats.opportunita.disponibili||1), 100*rB.stats.opportunita.colte/(rB.stats.opportunita.disponibili||1), 0, '%')}`);
+  L.push('', 'ACCAMPAMENTI ATTIVI NEL TEMPO (media concorrenza)');
+  const aaA = accampamentiAttiviReport(rA.stats.accampamentiAttivi), aaB = accampamentiAttiviReport(rB.stats.accampamentiAttivi);
+  for (const ra of aaA) { const rb = aaB.find((x) => x.range === ra.range); if (rb) L.push(`  ${ra.range}: ${fmtDelta(ra.media, rb.media, 2)}`); }
+  L.push('', 'STABILITÀ DEL LEADER (% stesso vincitore per turno checkpoint)');
+  const lsA = leaderStabilitaReport(rA.stats.leaderStabilita), lsB = leaderStabilitaReport(rB.stats.leaderStabilita);
+  for (const ra of lsA) { const rb = lsB.find((x) => x.turno === ra.turno); if (rb) L.push(`  turno ${ra.turno}: ${fmtDelta(ra.pctStesso, rb.pctStesso, 0, '%')}`); }
+  const volA = volatilitaLeadershipReport(rA.stats.volatilitaLeadership), volB = volatilitaLeadershipReport(rB.stats.volatilitaLeadership);
+  L.push('', 'VOLATILITÀ DELLA LEADERSHIP',
+    `  cambi medi: ${fmtDelta(volA.mediaCambi, volB.mediaCambi, 1)}`, `  senza cambi: ${fmtDelta(volA.pctZeroCambi, volB.pctZeroCambi, 0, '%')}`);
+  L.push('', 'UTILIZZO POZIONI (% uso per tipo)');
+  const pzA = pozioniReport(rA.stats), pzB = pozioniReport(rB.stats);
+  for (const ra of pzA) { const rb = pzB.find((x) => x.tipo === ra.tipo); if (rb) L.push(`  ${ra.tipo}: ${fmtDelta(ra.pctUso, rb.pctUso, 0, '%')} (ottenute ${ra.ottenute}→${rb.ottenute})`); }
+  L.push('', 'VALORE POZIONI ALLA VITTORIA (winrate con uso vs senza)');
+  for (const ra of pzA) {
+    const rb = pzB.find((x) => x.tipo === ra.tipo);
+    if (rb && ra.winrateConUso != null && rb.winrateConUso != null) L.push(`  ${ra.tipo}: ${fmtDelta(ra.winrateConUso, rb.winrateConUso, 0, '%')}`);
+  }
+  L.push('', 'SWING DELLA POZIONE (Δ PV a 10 turni dall\'uso)');
+  const swA = pozioniSwingReport(rA.stats), swB = pozioniSwingReport(rB.stats);
+  for (const ra of swA) {
+    const rb = swB.find((x) => x.tipo === ra.tipo);
+    if (rb && ra.deltaPV != null && rb.deltaPV != null) L.push(`  ${ra.tipo}: ${fmtDelta(ra.deltaPV, rb.deltaPV, 1)}`);
+  }
+  L.push('', 'VALORE ACCAMPAMENTO per ordine (rete finale · risorse pescate)');
+  const oA = accampamentiPerOrdine(rA.stats), oB = accampamentiPerOrdine(rB.stats);
+  for (const ra of oA) { const rb = oB.find((x) => x.ordine === ra.ordine); if (rb) L.push(`  ${ra.ordine}°: rete ${fmtDelta(ra.rete, rb.rete, 2)} · risorse ${fmtDelta(ra.risorse, rb.risorse, 2)}`); }
+  L.push('', 'CURVA DI MATURAZIONE DELLA RETE (rete media per età)');
+  const mA = accumulaMaturazione(rA.stats.accampamentiDettaglio), mB = accumulaMaturazione(rB.stats.accampamentiDettaglio);
+  for (const ra of mA) { const rb = mB.find((x) => x.eta === ra.eta); if (rb) L.push(`  +${ra.eta} turni: ${fmtDelta(ra.rete, rb.rete, 2)}`); }
+  L.push('', 'TEMPO MORTO ACCAMPAMENTI per ordine (vita utile · coda morta · % attivi a fine)');
+  const tA = tempoMortoPerOrdine(rA.stats), tB = tempoMortoPerOrdine(rB.stats);
+  for (const ra of tA) { const rb = tB.find((x) => x.ordine === ra.ordine); if (rb) L.push(`  ${ra.ordine}°: vita ${fmtDelta(ra.vitaUtile, rb.vitaUtile, 1)} · coda ${fmtDelta(ra.codaMorta, rb.codaMorta, 1)} · attivi ${fmtDelta(ra.pctAttivi, rb.pctAttivi, 0, '%')}`); }
+  L.push('', 'RISORSE SPRECATE (% rimasto in mano a fine partita, per giocatore)');
+  const sA = risorseSprecateReport(rA.stats, rA.giocatori), sB = risorseSprecateReport(rB.stats, rB.giocatori);
+  for (const ra of sA) { const rb = sB.find((x) => x.id === ra.id); if (rb) L.push(`  ${ra.id}: ${fmtDelta(ra.pctSprecato, rb.pctSprecato, 0, '%')}`); }
+  L.push('', 'CRONOLOGIA (turno medio)');
+  const cA = cronologiaReport(rA.stats.cronologia), cB = cronologiaReport(rB.stats.cronologia);
+  for (const ra of cA) { const rb = cB.find((x) => x.nome === ra.nome); if (rb) L.push(`  ${ra.nome}: ${fmtDelta(ra.turno, rb.turno, 1)}`); }
+  const ucA = ultimaConsegnaReport(rA.stats.ultimaConsegnaDettaglio), ucB = ultimaConsegnaReport(rB.stats.ultimaConsegnaDettaglio);
+  L.push('', 'VALORE DELL\'ULTIMA CONSEGNA',
+    `  turno: ${fmtDelta(ucA.turno, ucB.turno, 1)}`, `  PV: ${fmtDelta(ucA.pv, ucB.pv, 1)}`, `  chiude la partita: ${fmtDelta(ucA.pctChiude, ucB.pctChiude, 0, '%')}`);
+  L.push('', 'TEMPO RACCOLTA → CONSEGNA (media turni)',
+    `  ${fmtDelta(raccoltaConsegnaReport(rA.stats.raccoltaConsegna).media, raccoltaConsegnaReport(rB.stats.raccoltaConsegna).media)}`);
+  L.push('', 'INVENTARIO MEDIO PER TURNO (risorse in carico medie/giocatore)');
+  const iA = inventarioTurnoReport(rA.stats.inventarioTurno), iB = inventarioTurnoReport(rB.stats.inventarioTurno);
+  for (const ra of iA) { const rb = iB.find((x) => x.range === ra.range); if (rb) L.push(`  ${ra.range}: ${fmtDelta(ra.media, rb.media)}`); }
+  return L;
+}
+
+// "valore di un accampamento": per ogni componente connessa a fine partita (= un accampamento,
+// vedi lunghezzeCatene) — turno di apertura (dal primo evento costruisci sui suoi hex), rete finale,
+// costruzioni totali, raccolte/risorse pescate al SUO nodo. PV e consegne NON sono qui: le risorse
+// (g.droghe) sono un pool fungibile per giocatore, non tracciate per accampamento di provenienza —
+// non è possibile attribuire una consegna/PV a un accampamento specifico senza ritaggare il modello.
+function analizzaAccampamenti(state, board, turniPartita) {
+  const owner = state.built;
+  const visitate = new Set();
+  const componenti = []; // { player, hexes:Set }
+  for (const [k, pid] of owner) {
+    if (visitate.has(k)) continue;
+    const comp = new Set([k]), stack = [k];
+    while (stack.length) {
+      const cur = stack.pop();
+      const [q, r] = cur.split(',').map(Number);
+      for (const v of vicini(board, q, r)) {
+        const vk = `${v.q},${v.r}`;
+        if (owner.get(vk) === pid && !comp.has(vk)) { comp.add(vk); stack.push(vk); }
+      }
+    }
+    for (const kk of comp) visitate.add(kk);
+    componenti.push({ player: pid, hexes: comp, costruzioni: 0, turnoApertura: Infinity, nodeK: null, turniCostruzioni: [] });
+  }
+  const hexToComp = new Map();
+  componenti.forEach((c, i) => c.hexes.forEach((h) => hexToComp.set(h, i)));
+  for (const e of state.log) {
+    if (e.tipo === 'costruisci' && e.hex && hexToComp.has(e.hex)) {
+      const c = componenti[hexToComp.get(e.hex)];
+      c.costruzioni++;
+      c.turniCostruzioni.push(e.n);
+      if (e.n < c.turnoApertura) { c.turnoApertura = e.n; c.nodeK = e.nodo; }
+    }
+    // sperimentale, pozione "euforia": segmento extra loggato come hex2 su un'azione 'pesca'.
+    if (e.hex2 && hexToComp.has(e.hex2)) {
+      const c2 = componenti[hexToComp.get(e.hex2)];
+      c2.costruzioni++;
+      c2.turniCostruzioni.push(e.n);
+      if (e.n < c2.turnoApertura) { c2.turnoApertura = e.n; c2.nodeK = e.nodo; }
+    }
+  }
+  // pesca è per nodo, non per accampamento: se un giocatore ha 2 componenti sullo stesso nodo
+  // (raro — solo seed non adiacenti), le raccolte si dividono in parti uguali fra loro.
+  const pescaPerNodo = new Map(); // "pid|nodeK" -> { raccolte, risorse, ultimoTurno }
+  for (const e of state.log) {
+    if (e.tipo !== 'pesca') continue;
+    const key = `${e.player}|${e.nodo}`;
+    const r = pescaPerNodo.get(key) || { raccolte: 0, risorse: 0, ultimoTurno: 0 };
+    r.raccolte++; r.risorse += e.risorse; r.ultimoTurno = Math.max(r.ultimoTurno, e.n); pescaPerNodo.set(key, r);
+  }
+  const compPerNodo = new Map();
+  for (const c of componenti) { const key = `${c.player}|${c.nodeK}`; compPerNodo.set(key, (compPerNodo.get(key) || 0) + 1); }
+  const perPlayer = {};
+  for (const c of componenti) {
+    const key = `${c.player}|${c.nodeK}`;
+    const r = pescaPerNodo.get(key) || { raccolte: 0, risorse: 0, ultimoTurno: 0 };
+    const share = compPerNodo.get(key) || 1;
+    (perPlayer[c.player] ||= []).push({ ...c, raccolte: r.raccolte / share, risorse: r.risorse / share, ultimaRaccolta: r.ultimoTurno });
+  }
+  // soglia oltre la quale "l'ultima attività è vicina alla fine partita" = considerato ancora attivo,
+  // non abbandonato (evita di scambiare "la partita è finita" per "il giocatore ha smesso di usarlo").
+  const SOGLIA_ATTIVO = 3;
+  const risultato = [];
+  for (const pid in perPlayer) {
+    perPlayer[pid].sort((a, b) => a.turnoApertura - b.turnoApertura);
+    perPlayer[pid].forEach((c, i) => {
+      const ultimaCostruzione = c.turniCostruzioni.length ? Math.max(...c.turniCostruzioni) : c.turnoApertura;
+      const ultimaAttivita = Math.max(ultimaCostruzione, c.ultimaRaccolta);
+      const codaMorta = turniPartita - ultimaAttivita;
+      risultato.push({
+        player: pid, ordine: i + 1, turnoApertura: c.turnoApertura,
+        rete: c.hexes.size, costruzioni: c.costruzioni, raccolte: c.raccolte, risorse: c.risorse,
+        eta: c.turniCostruzioni.map((t) => t - c.turnoApertura).sort((a, b) => a - b), // età (turni dall'apertura) di ogni costruzione, per la curva di maturazione
+        turniResidui: turniPartita - c.turnoApertura, // quanto è durata la partita DOPO l'apertura — la "finestra di osservazione" di questo accampamento
+        vitaUtile: ultimaAttivita - c.turnoApertura, // turni fra apertura e ultima costruzione/raccolta
+        codaMorta, // turni fra ultima attività e fine partita — quanto è rimasto "morto" prima che la partita finisse
+        ancoraAttivo: codaMorta <= SOGLIA_ATTIVO, // ultima attività vicina alla fine = mai davvero abbandonato
+      });
+    });
+  }
+  return risultato;
+}
+
+async function runBatch(n, seedStart, giocatori, persByPid, aiByPid, mercatoOpts = {}, onProgress = null) {
+  const { primoGiocatoreSetting, ...restOpts } = mercatoOpts;
+  const mazzoById = new Map((mercatoOpts.mazzo || []).map((c) => [c.id, c]));
+  const N = giocatori.length;
+  const stats = {
+    N, giocatori,
+    turni: [], vittorie: Object.fromEntries([...giocatori.map((id) => [id, 0]), ['pareggio', 0]]),
+    vittoriePosizione: Array.from({ length: N }, () => 0), pareggiPosizione: 0, // chi muove N-esimo vince di più?
+    pv: Object.fromEntries(giocatori.map((id) => [id, []])), primaPesca: [], costruzioni: [], consegne: [], pesche: [], scarto: [], nodiFondati: [],
+    costruzioniPerGiocatore: Object.fromEntries(giocatori.map((id) => [id, []])), // azioni "costruisci" (rete, non nuovi seed), per partita
+    fineMotivo: { mercato: 0, accampamenti: 0 }, // perché è finita la partita (regola accampamentiMax)
+    accampamentiDettaglio: [], // "valore di un accampamento" — vedi analizzaAccampamenti()
+    rendimentoTurno: new Map(), // bucket di 10 turni -> { pv, risorse, accampamenti, partite } — vedi accumulaRendimentoTurno()
+    transizioni: new Map(),    // azione -> azione successiva (stesso giocatore) -> conteggio — vedi accumulaTransizioni()
+    cronologia: { accampamento: [], raccolta: [], consegnaL1: [], consegnaL2: [], consegnaL3: [], primoContributo: [], ultimaConsegna: [], finePartita: [] },
+    raccoltaConsegna: [], // gap in turni raccolta→consegna, vedi accumulaRaccoltaConsegna()
+    inventarioTurno: new Map(), // bucket di 10 turni -> { tot, n } inventario medio/giocatore — vedi accumulaInventarioTurno()
+    risorsePerGiocatore: Object.fromEntries(giocatori.map((id) => [id, { raccolte: [], spese: [], rimaste: [] }])),
+    cartePerId: new Map(),   // cartaId -> { esposizioni, turniEsposizione:[], consegne, turniConsegna:[] } — vedi qualitaCarte()
+    opportunita: { disponibili: 0, colte: 0 }, // consegne disponibili colte vs ignorate, da state.opportunitaStats (bot.js)
+    ultimaConsegnaDettaglio: [], // { turno, pv, chiude } per partita — vedi ultimaConsegnaReport()
+    accampamentiAttivi: new Map(), // bucket di 10 turni -> { tot, n } concorrenza accampamenti — vedi accumulaAccampamentiAttivi()
+    leaderStabilita: new Map(), // turno checkpoint -> { stesso, totale } — chi è in testa a quel turno finisce per vincere?
+    pozioni: Object.fromEntries(Object.keys(POZIONE_NOMI).map((t) => [t, nuovoAccPozione()])),
+    pozioniSwing: Object.fromEntries(Object.keys(POZIONE_NOMI).map((t) => [t, { deltaPV: [], deltaRank: [] }])),
+    pozioniPerLivello: new Map(),       // "livello|tipo" -> stessa forma di stats.pozioni[tipo] — vedi accumulaPozioni()
+    pozioniSwingPerLivello: new Map(),  // "livello|tipo" -> { deltaPV, deltaRank } — vedi accumulaSwingPozioni()
+    volatilitaLeadership: [], // { cambi, primoCambio, ultimoCambio } per partita — quanto spesso cambia il leader
+    festivalContributi: [], festivalPV: [], festivalAperti: [], festivalPerGiocatore: Object.fromEntries(giocatori.map((id) => [id, []])),
+    festivalPressioneRidotta: 0, festivalPressioneInvariata: 0,
+    festivalPerLivello: { 1: { aperti: 0, contributi: 0 }, 2: { aperti: 0, contributi: 0 }, 3: { aperti: 0, contributi: 0 } },
+    pvLivello: { 1: [], 2: [], 3: [] },  // per partita: somma PV da carte L1/L2/L3, tutti i giocatori
+    consegneLivelloPerGiocatore: Object.fromEntries(giocatori.map((id) => [id, { 1: [], 2: [], 3: [] }])), // numero carte (non PV), per partita
+    nodi: new Map(),   // nodeK -> conteggio costruzioni, su tutte le partite
+    hex: new Map(),    // hexK -> { c: conteggio costruzioni, turni: somma turno di costruzione }
+    nodoIniziale: new Map(),   // nodeK -> { vittorie, partite } — primo nodo scelto dal giocatore, correlato a vittoria
+    nodiRisorse: new Map(),    // nodeK -> { usi, risorse } — risorse raccolte per uso (costruisci+pesca), su tutte le partite
+    nodoApertura: { libero: 0, condiviso: 0, conteso: 0 }, // al momento di aprire un NUOVO accampamento (seed), il nodo era: nessuno presente / già lui stesso / già un avversario
+    aperturaTurno: { libero: [], condiviso: [], conteso: [] }, // turno di gioco (e.n) di ogni seed, per categoria — isola l'effetto tempo dall'effetto tipo-nodo
+    nodoPresenza: new Map(),  // nodeK -> { sommaGiocatori, partite, distribuzione: {1:n,2:n,...} } — quanti giocatori DISTINTI hanno un seed su quel nodo, per partita
+    nodoSaturazione: new Map(), // nodeK -> { [pid]: totale accampamenti aperti lì, su tutto il batch }
+    biomaStesso: 0, biomaDiverso: 0, zoneDistinte: [], // nuovi accampamenti: stesso bioma già usato vs bioma nuovo
+    catene: [],  // lunghezza di OGNI accampamento, tutte le partite, tutti i giocatori
+    reteFinale: { accampamenti: [], segmenti: [] }, // per (giocatore, partita): n° accampamenti e n° segmenti totali a fine partita — dimensione finale della rete, vedi reteFinaleReport()
+    motivoInutilizzo: { commessaDisponibile: 0, mancavanoAltreRisorse: 0, nessunaCommessa: 0, partitaTerminata: 0 }, // unità di risorsa rimaste a fine partita, per motivo — vedi storicoMercato nel loop batch
+    risorseMancantiPerCommessa: [], // per ogni (giocatore, carta del mercato recente NON completabile con le sue risorse finali): quante unità mancano in totale — "vicino o lontano dall'equilibrio?"
+    risorseMancantiPerTipo: Object.fromEntries(RISORSE.map((r) => [r, 0])), // stessa base, ma QUALE risorsa manca (1 conteggio per tipo per commessa non completata, non per unità) — collo di bottiglia diffuso o su una risorsa sola?
+    risorsePerTipo: Object.fromEntries(RISORSE.map((r) => [r, { raccolta: 0, consegnata: 0, rimasta: 0 }])), // flusso per risorsa: quanto se ne raccoglie/spende/avanza — vedi flussoRisorseReport()
+    produzionePerBioma: Object.fromEntries(RISORSE.map((r) => [r, { risorse: 0, costruzioni: 0 }])), // resa per singola azione "costruisci" nel bioma di quella risorsa — non contesa del nodo, rendimento reale
+    // consegnaPos[k][pos] = turni della (k+1)-esima consegna dei giocatori che sedevano in posizione `pos`
+    consegnaPos: [0, 1, 2].map(() => Array.from({ length: N }, () => [])),
+    permanenzaCarte: [], carteMaiVendute: 0, // turni sul mercato prima di essere consegnate
+    bonusFinale: { // regola sperimentale risorseVittoria — vedi engine.applicaBonusRisorse()
+      droghe: Object.fromEntries(giocatori.map((id) => [id, []])),
+      bonus: Object.fromEntries(giocatori.map((id) => [id, []])),
+      bonusDist: {}, // n PV bonus (0,1,2,...) -> conteggio partite-giocatore
+      esito: { nessunCambiamento: 0, pareggioRisolto: 0, ribaltato: 0 },
+      perClassifica: Array.from({ length: N }, () => []), // bonus PV per posizione in classifica finale (1°, 2°, ...) — il bonus premia chi vince già?
+    },
+    inventarioWinrate: {}, // bucket risorse finali -> { vittorie, partite } — chi finisce con più risorse in carico vince di più o di meno?
+  };
+  const t0 = performance.now();
+  let lastYield = t0;
+  for (let i = 0; i < n; i++) {
+    if (onProgress && performance.now() - lastYield > 100) {
+      onProgress(i, n, t0);
+      await new Promise((r) => setTimeout(r, 0));
+      lastYield = performance.now();
+    }
+    const seed = seedStart + i;
+    const primoGiocatore = primoGiocatoreSetting === 'alterna' ? (giocatori[i % N]) : (primoGiocatoreSetting && giocatori.includes(primoGiocatoreSetting) ? primoGiocatoreSetting : giocatori[0]);
+    // permanenza carte sul mercato: onTurno confronta lo snapshot con quello precedente, rileva
+    // entrate/uscite. turno 0 = stato iniziale (bot.js chiama onTurno anche prima della prima mossa).
+    const entrate = new Map(); // cartaId -> turno di ingresso nel mercato
+    let precedenti = new Set();
+    const leaderCheckpoint = {}; // turno checkpoint -> id del leader (più PV) in quel momento
+    const storiaPunti = {}; // turno -> { pid: punti } ad OGNI turno — per lo swing delle pozioni (accumulaSwingPozioni)
+    // mercato "recente": a fine partita il mercato è SEMPRE vuoto per definizione (finita() lo
+    // richiede), quindi non è utilizzabile per capire "cosa c'era sul tavolo quando la partita è
+    // finita" — l'ultimo stato non vuoto da solo degenera quasi sempre a 1 sola carta (quella
+    // in consegna proprio all'ultimo turno). Si accumula invece l'UNIONE delle carte viste nelle
+    // ultime FINESTRA_MERCATO_RECENTE mosse a mercato non vuoto: un campione più rappresentativo
+    // di "cosa era disponibile verso la fine". Vedi motivoInutilizzo nel loop batch.
+    const FINESTRA_MERCATO_RECENTE = 15;
+    let storicoMercato = [];
+    // flusso risorse per tipo: droghe cala SOLO per consegna (engine.js, consegna() fa splice) e
+    // sale SOLO per pesca/costruisci-pesca — quindi il delta fra due snapshot consecutivi del
+    // carico di un giocatore, risorsa per risorsa, classifica da solo "raccolta" (delta>0) vs
+    // "consegnata/spesa" (delta<0), senza dover toccare l'engine per loggare i tipi.
+    let droghePrec = Object.fromEntries(giocatori.map((id) => [id, {}]));
+    const onTurno = (s, t) => {
+      if (s.festival.mercato.length) {
+        storicoMercato.push([...s.festival.mercato]); // copia: l'array reale viene mutato in-place (splice/push) turno dopo turno
+        if (storicoMercato.length > FINESTRA_MERCATO_RECENTE) storicoMercato.shift();
+      }
+      for (const g of s.giocatori) {
+        const attuali = {};
+        for (const r of g.droghe) attuali[r] = (attuali[r] || 0) + 1;
+        const prec = droghePrec[g.id];
+        for (const r of RISORSE) {
+          const delta = (attuali[r] || 0) - (prec[r] || 0);
+          if (delta > 0) stats.risorsePerTipo[r].raccolta += delta;
+          else if (delta < 0) stats.risorsePerTipo[r].consegnata += -delta;
+        }
+        droghePrec[g.id] = attuali;
+      }
+      storiaPunti[t] = Object.fromEntries(s.giocatori.map((g) => [g.id, g.punti]));
+      if (t > 0 && t % BUCKET_TURNI === 0) {
+        const lead = s.giocatori.reduce((best, g) => (g.punti > best.punti ? g : best), s.giocatori[0]);
+        leaderCheckpoint[t] = lead.id;
+      }
+      const attuali = new Set(s.festival.mercato.map((c) => c.id));
+      for (const id of attuali) if (!precedenti.has(id) && !entrate.has(id)) {
+        entrate.set(id, t);
+        const cc = stats.cartePerId.get(id) || { esposizioni: 0, turniEsposizione: [], consegne: 0, turniConsegna: [] };
+        cc.esposizioni++; cc.turniEsposizione.push(t); stats.cartePerId.set(id, cc);
+      }
+      for (const id of precedenti) if (!attuali.has(id) && entrate.has(id)) {
+        stats.permanenzaCarte.push(t - entrate.get(id));
+        entrate.delete(id);
+      }
+      precedenti = attuali;
+      accumulaInventarioTurno(stats.inventarioTurno, t, s.giocatori);
+    };
+    const { state, turni, finita } = partita(board, CARTA, {
+      seed, cfg, maxTurni: 2000, giocatori, pers: persByPid, ai: aiByPid, ...restOpts, primoGiocatore, onTurno,
+    });
+    if (!finita) continue; // stallo: escludi dal campione, non falsare la media
+    stats.turni.push(turni);
+    // motivo di fine partita: mercato esaurito ha priorità (è il primo check in engine.finita()) —
+    // può capitare che entrambe le condizioni siano vere nello stesso turno, non le contiamo doppie.
+    stats.fineMotivo[state.festival.mercato.length === 0 ? 'mercato' : 'accampamenti']++;
+    const accGame = analizzaAccampamenti(state, board, turni);
+    stats.accampamentiDettaglio.push(...accGame);
+    accumulaAccampamentiAttivi(stats.accampamentiAttivi, accGame, turni);
+    accumulaRendimentoTurno(stats.rendimentoTurno, state.log, turni);
+    accumulaTransizioni(stats.transizioni, state.log);
+    accumulaCronologia(stats.cronologia, state.log, state.festivalStats.eventi, turni);
+    accumulaRaccoltaConsegna(stats.raccoltaConsegna, state.log);
+    accumulaCarteERisorse(stats, state, mazzoById);
+    accumulaUltimaConsegna(stats.ultimaConsegnaDettaglio, state.log);
+    if (state.opportunitaStats) { stats.opportunita.disponibili += state.opportunitaStats.disponibili; stats.opportunita.colte += state.opportunitaStats.colte; }
+    const w = vincitore(state);
+    if (state.bonusFinale) {
+      for (const g of state.giocatori) {
+        const { droghe, bonus } = state.bonusFinale.per[g.id];
+        stats.bonusFinale.droghe[g.id].push(droghe);
+        stats.bonusFinale.bonus[g.id].push(bonus);
+        const key = String(bonus); // valore esatto, non troncato: la coda alta (5+, 6+) deve restare visibile
+        stats.bonusFinale.bonusDist[key] = (stats.bonusFinale.bonusDist[key] || 0) + 1;
+      }
+      // vincitore SENZA bonus (dai prePunti salvati) vs vincitore CON bonus (w, già calcolato sopra)
+      const wPre = vincitore({ giocatori: state.giocatori.map((g) => ({ id: g.id, punti: state.bonusFinale.per[g.id].prePunti })) });
+      if (!wPre && w) stats.bonusFinale.esito.pareggioRisolto++;
+      else if (wPre && w && wPre.id !== w.id) stats.bonusFinale.esito.ribaltato++;
+      else stats.bonusFinale.esito.nessunCambiamento++;
+      // il bonus premia chi vince già? bonus PV per posizione nella classifica finale (1° = più PV)
+      const classifica = [...state.giocatori].sort((a, b) => b.punti - a.punti);
+      classifica.forEach((g, pos) => stats.bonusFinale.perClassifica[pos].push(state.bonusFinale.per[g.id].bonus));
+    }
+    for (const g of state.giocatori) {
+      const key = bucketRisorseFinali(g.droghe.length);
+      const r = stats.inventarioWinrate[key] || { vittorie: 0, partite: 0 };
+      r.partite++; if (w && w.id === g.id) r.vittorie++;
+      stats.inventarioWinrate[key] = r;
+    }
+    accumulaPozioni(stats, state, turni, w, mazzoById);
+    accumulaSwingPozioni(stats, state, storiaPunti, turni, mazzoById);
+    stats.vittorie[w ? w.id : 'pareggio']++;
+    // stabilità del leader: chi era in testa a un dato turno è poi lo stesso che vince? Pareggio
+    // finale escluso (nessun "vincitore" da confrontare, come in E-008).
+    if (w) for (const [tStr, leaderId] of Object.entries(leaderCheckpoint)) {
+      const t = +tStr;
+      const r = stats.leaderStabilita.get(t) || { stesso: 0, totale: 0 };
+      r.totale++; if (leaderId === w.id) r.stesso++;
+      stats.leaderStabilita.set(t, r);
+    }
+    { // volatilità: conta i cambi di leader fra checkpoint consecutivi (funziona anche sui pareggi)
+      const checkpoints = Object.keys(leaderCheckpoint).map(Number).sort((a, b) => a - b);
+      let cambi = 0, primoCambio = null, ultimoCambio = null;
+      for (let k = 1; k < checkpoints.length; k++) {
+        if (leaderCheckpoint[checkpoints[k]] !== leaderCheckpoint[checkpoints[k - 1]]) {
+          cambi++; if (primoCambio === null) primoCambio = checkpoints[k]; ultimoCambio = checkpoints[k];
+        }
+      }
+      stats.volatilitaLeadership.push({ cambi, primoCambio, ultimoCambio });
+    }
+    const ordinePartita = state.giocatori.map((g) => g.id); // ordine di turno effettivo di QUESTA partita
+    if (w) stats.vittoriePosizione[ordinePartita.indexOf(w.id)]++; else stats.pareggiPosizione++;
+    for (const g of state.giocatori) stats.pv[g.id].push(g.punti);
+    for (const g of state.giocatori) for (const liv of [1, 2, 3])
+      stats.consegneLivelloPerGiocatore[g.id][liv].push(g.carte.filter((c) => c.livello === liv).length);
+    const cat = lunghezzeCatene(state);
+    for (const id of giocatori) {
+      stats.catene.push(...cat[id]);
+      stats.reteFinale.accampamenti.push(cat[id].length);
+      stats.reteFinale.segmenti.push(cat[id].reduce((s, x) => s + x, 0));
+    }
+    // motivo inutilizzo: ogni risorsa rimasta nell'inventario finale di ogni giocatore, classificata
+    // contro il mercato "recente" (unione delle carte viste nelle ultime mosse a mercato non vuoto,
+    // vedi storicoMercato sopra — il mercato REALE a fine partita è sempre [], per definizione).
+    // "Partita terminata" resta 0 salvo fine anticipata (accampamentiMax/stallo): a mercato esaurito
+    // la pila è SEMPRE vuota anche lei, nessuna carta resta mai "non pescata".
+    const mercatoRecente = new Map();
+    for (const snap of storicoMercato) for (const c of snap) mercatoRecente.set(c.id, c);
+    const carteRecenti = [...mercatoRecente.values()];
+    for (const g of state.giocatori) {
+      const conteggi = {};
+      for (const r of g.droghe) conteggi[r] = (conteggi[r] || 0) + 1;
+      for (const [r, n] of Object.entries(conteggi)) {
+        const richiedono = carteRecenti.filter((c) => (c.need[r] || 0) > 0);
+        const cat = richiedono.some((c) => completabile(g.droghe, c.need)) ? 'commessaDisponibile'
+          : richiedono.length ? 'mancavanoAltreRisorse' : 'nessunaCommessa';
+        stats.motivoInutilizzo[cat] += n;
+        stats.risorsePerTipo[r].rimasta += n;
+      }
+      if (state.festival.pila.length) for (const c of state.festival.pila) for (const [r, need] of Object.entries(c.need))
+        if (need > 0) stats.motivoInutilizzo.partitaTerminata += Math.min(need, conta(g.droghe, r));
+      // a quanto manca la commessa NON completata più vicina — "vicino o lontano dall'equilibrio?"
+      for (const c of carteRecenti) {
+        const m = mancanti(g.droghe, c.need);
+        if (m > 0) {
+          stats.risorseMancantiPerCommessa.push(m);
+          // QUALE risorsa manca: 1 conteggio per tipo per commessa (non per unità) — collo di
+          // bottiglia su una risorsa sola, o distribuito uniformemente sulle carte?
+          for (const [r, need] of Object.entries(c.need)) if (need > conta(g.droghe, r)) stats.risorseMancantiPerTipo[r]++;
+        }
+      }
+    }
+    // rendimento reale per bioma: risorse ottenute per azione "costruisci" nella zona di quella
+    // risorsa (pesca-su-build, incluso il bonus di eventuali pozioni) — non contesa del nodo, resa.
+    for (const e of state.log) {
+      if (e.tipo !== 'costruisci' || !e.hex) continue;
+      const h = board.hexes.get(e.hex);
+      const r = h && CARTA[h.zone];
+      if (!r) continue;
+      stats.produzionePerBioma[r].risorse += e.risorse || 0;
+      stats.produzionePerBioma[r].costruzioni++;
+    }
+    stats.carteMaiVendute += entrate.size; // rimaste sul mercato/pila a fine partita (o senza consegna successiva)
+    for (const pid of ordinePartita) {
+      const pos = ordinePartita.indexOf(pid);
+      const consegne = state.log.filter((e) => e.tipo === 'consegna' && e.player === pid).map((e) => e.n);
+      for (const k of [0, 1, 2]) if (consegne[k] != null) stats.consegnaPos[k][pos].push(consegne[k]);
+    }
+    stats.costruzioni.push(state.giocatori.reduce((s, g) => s + g.azioni.costruisci, 0));
+    for (const g of state.giocatori) stats.costruzioniPerGiocatore[g.id].push(g.azioni.costruisci);
+    stats.consegne.push(state.giocatori.reduce((s, g) => s + g.azioni.consegna, 0));
+    stats.pesche.push(state.giocatori.reduce((s, g) => s + g.azioni.pesca, 0));
+    stats.nodiFondati.push(state.giocatori.reduce((s, g) => s + (g.azioni.compraNodo || 0), 0));
+    const punti = state.giocatori.map((g) => g.punti);
+    stats.scarto.push(Math.max(...punti) - Math.min(...punti));
+    stats.festivalContributi.push(state.festivalStats.contributi);
+    stats.festivalPV.push(state.festivalStats.pvAssegnati);
+    stats.festivalAperti.push(state.festivalStats.aperti);
+    for (const id of giocatori) stats.festivalPerGiocatore[id].push(state.festivalStats.perGiocatore[id] || 0);
+    stats.festivalPressioneRidotta += state.festivalStats.pressioneRidotta;
+    stats.festivalPressioneInvariata += state.festivalStats.pressioneInvariata;
+    for (const liv of [1, 2, 3]) {
+      stats.festivalPerLivello[liv].aperti += state.festivalStats.perLivello[liv].aperti;
+      stats.festivalPerLivello[liv].contributi += state.festivalStats.perLivello[liv].contributi;
+    }
+    for (const liv of [1, 2, 3]) stats.pvLivello[liv].push(
+      state.giocatori.reduce((s, g) => s + g.carte.filter((c) => c.livello === liv).reduce((s2, c) => s2 + c.punti, 0), 0));
+    const primaP = state.log.find((e) => e.tipo === 'pesca');
+    if (primaP) stats.primaPesca.push(primaP.n);
+    for (const e of state.log) if (e.tipo === 'costruisci') {
+      if (e.nodo) stats.nodi.set(e.nodo, (stats.nodi.get(e.nodo) || 0) + 1);
+      if (e.hex) { const r = stats.hex.get(e.hex) || { c: 0, turni: 0 }; r.c++; r.turni += e.n; stats.hex.set(e.hex, r); }
+    }
+    for (const e of state.log) if (e.tipo === 'costruisci' || e.tipo === 'pesca') {
+      const r = stats.nodiRisorse.get(e.nodo) || { usi: 0, risorse: 0 };
+      r.usi++; r.risorse += e.risorse; stats.nodiRisorse.set(e.nodo, r);
+    }
+    for (const pid of giocatori) {
+      const prima = state.log.find((e) => e.player === pid && (e.tipo === 'costruisci' || e.tipo === 'pesca'));
+      if (!prima) continue;
+      const r = stats.nodoIniziale.get(prima.nodo) || { vittorie: 0, partite: 0 };
+      r.partite++; if (w && w.id === pid) r.vittorie++;
+      stats.nodoIniziale.set(prima.nodo, r);
+    }
+    // nuovi accampamenti (seed = hex adiacente al nodo) per giocatore, in ordine: la zona è già
+    // stata usata da un accampamento precedente (reinvestimento) o è una zona nuova (diversificazione)?
+    for (const pid of giocatori) {
+      const usate = new Set();
+      for (const e of state.log) {
+        if (e.tipo !== 'costruisci' || e.player !== pid || !e.hex || !e.nodo) continue;
+        const node = board.hexes.get(e.nodo);
+        const seed = vicini(board, node.q, node.r).some((v) => `${v.q},${v.r}` === e.hex);
+        if (!seed) continue;
+        const zona = board.hexes.get(e.hex).zone;
+        if (usate.has(zona)) stats.biomaStesso++; else stats.biomaDiverso++;
+        usate.add(zona);
+      }
+      stats.zoneDistinte.push(usate.size);
+    }
+    // contesa territoriale: per ogni NUOVO accampamento (seed), il nodo era libero (nessuno),
+    // condiviso (già lui stesso, altrove nello stesso nodo) o conteso (già un avversario)? Un solo
+    // passaggio cronologico sul log — l'ordine conta (chi arriva prima "libera" il nodo per sé).
+    const occupantiNodo = new Map(); // nodeK -> Set(player) con almeno un seed lì
+    for (const e of state.log) {
+      if (e.tipo !== 'costruisci' || !e.hex || !e.nodo) continue;
+      const node = board.hexes.get(e.nodo);
+      const seed = vicini(board, node.q, node.r).some((v) => `${v.q},${v.r}` === e.hex);
+      if (!seed) continue;
+      const occ = occupantiNodo.get(e.nodo) || new Set();
+      let categoria;
+      if (occ.size === 0) categoria = 'libero';
+      else if ([...occ].some((pid) => pid !== e.player)) categoria = 'conteso';
+      else categoria = 'condiviso';
+      stats.nodoApertura[categoria]++;
+      stats.aperturaTurno[categoria].push(e.n);
+      occ.add(e.player);
+      occupantiNodo.set(e.nodo, occ);
+      // saturazione: totale accampamenti (seed) per giocatore, su questo nodo, su tutto il batch
+      const sat = stats.nodoSaturazione.get(e.nodo) || {};
+      sat[e.player] = (sat[e.player] || 0) + 1;
+      stats.nodoSaturazione.set(e.nodo, sat);
+    }
+    for (const [nodeK, occ] of occupantiNodo) {
+      const r = stats.nodoPresenza.get(nodeK) || { sommaGiocatori: 0, partite: 0, distribuzione: {} };
+      r.sommaGiocatori += occ.size; r.partite++;
+      r.distribuzione[occ.size] = (r.distribuzione[occ.size] || 0) + 1;
+      stats.nodoPresenza.set(nodeK, r);
+    }
+  }
+  if (onProgress) onProgress(n, n, t0);
+  return stats;
+}
+
+// tutti gli hex "costruibili" nella carta setup del batch (no nodo/festival, no risorsa attiva sopra)
+function hexCostruibili() {
+  return [...board.hexes.values()]
+    .filter((h) => !h.node && !(h.resource && h.resource === CARTA[h.zone]))
+    .map((h) => `${h.q},${h.r}`);
+}
+
+const media = (a) => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+const conta = (arr, x) => arr.filter((v) => v === x).length;
+const completabile = (droghe, need) => Object.entries(need).every(([r, c]) => conta(droghe, r) >= c);
+const mancanti = (droghe, need) => Object.entries(need).reduce((s, [r, c]) => s + Math.max(0, c - conta(droghe, r)), 0);
+// formatta secondi in "1h 12m 03s" / "12m 03s" / "07s", per la stima di tempo rimasto del batch
+function fmtDurata(s) {
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  if (h) return `${h}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`;
+  if (m) return `${m}m ${String(sec).padStart(2, '0')}s`;
+  return `${sec}s`;
+}
+const top = (m, n) => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+// copia negli appunti: clipboard API richiede contesto sicuro (https/localhost) e fallisce silenziosa
+// su file:// — fallback a execCommand('copy') via textarea nascosta. Mostra "✓ Copiato" solo se una
+// delle due strategie riesce davvero, altrimenti "✕ Errore".
+async function copiaTesto(testo, btn, labelDefault) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(testo); ok = true; } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea');
+    ta.value = testo; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { ok = document.execCommand('copy'); } catch {}
+    document.body.removeChild(ta);
+  }
+  btn.textContent = ok ? '✓ Copiato' : '✕ Errore';
+  setTimeout(() => btn.textContent = labelDefault, 1500);
+}
+// somma nodoSaturazione su tutti i nodi -> totale accampamenti aperti per giocatore, su tutto il batch
+const accampamentiPerGiocatore = (stats, giocatori) => Object.fromEntries(giocatori.map((id) =>
+  [id, [...stats.nodoSaturazione.values()].reduce((s, sat) => s + (sat[id] || 0), 0)]));
+
+// KPI normalizzati per giocatore: i totali di partita (turni, consegne, accampamenti, ...) dipendono
+// da quanti giocatori si alternano — un batch 2p/3p/4p non è confrontabile sui totali grezzi, lo è
+// sul "carico" che tocca a ciascun giocatore (quello che un giocatore percepisce durante la partita).
+function kpiNormalizzati(stats, giocatori) {
+  const tot = stats.turni.length || 1, N = giocatori.length;
+  const accTot = accampamentiPerGiocatore(stats, giocatori);
+  const accMedi = Object.values(accTot).reduce((s, x) => s + x, 0) / tot / N;
+  return [
+    { kpi: 'Turni/giocatore', valore: media(stats.turni) / N },
+    { kpi: 'Consegne/giocatore', valore: media(stats.consegne) / N },
+    { kpi: 'Accampamenti/giocatore', valore: accMedi },
+    { kpi: 'Raccolte/giocatore', valore: media(stats.pesche) / N },
+    { kpi: 'Costruzioni/giocatore', valore: media(stats.costruzioni) / N },
+    { kpi: 'Azioni totali/giocatore', valore: (media(stats.costruzioni) + media(stats.consegne) + media(stats.pesche)) / N },
+    { kpi: 'Spreco risorse medio (%)', valore: media(risorseSprecateReport(stats, giocatori).map((r) => r.pctSprecato)) },
+  ];
+}
+// raggruppa accampamentiDettaglio per "ordine" (1° aperto, 2°, ... — 6+ accorpati): risponde a
+// "il 1° accampamento vale più del 4°?" mediando rete/costruzioni/raccolte/risorse per posizione.
+function accampamentiPerOrdine(stats) {
+  const CAP = 6;
+  const buckets = new Map();
+  for (const c of stats.accampamentiDettaglio) {
+    const k = Math.min(c.ordine, CAP);
+    const b = buckets.get(k) || { n: 0, turno: [], rete: [], costruzioni: [], raccolte: [], risorse: [] };
+    b.n++; b.turno.push(c.turnoApertura); b.rete.push(c.rete); b.costruzioni.push(c.costruzioni);
+    b.raccolte.push(c.raccolte); b.risorse.push(c.risorse);
+    buckets.set(k, b);
+  }
+  return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([ordine, b]) => ({
+    ordine: ordine === CAP ? `${CAP}+` : String(ordine), n: b.n,
+    turno: media(b.turno), rete: media(b.rete), costruzioni: media(b.costruzioni),
+    raccolte: media(b.raccolte), risorse: media(b.risorse),
+  }));
+}
+// tempo morto: quanto un accampamento resta "morto" (nessuna costruzione/raccolta) prima che la
+// partita finisca. Completa "valore di un accampamento" con il ciclo di vita: nasce, viene
+// sfruttato, poi o resta attivo fino alla fine o viene abbandonato con N turni morti sulle spalle.
+function tempoMortoPerOrdine(stats) {
+  const CAP = 6;
+  const buckets = new Map();
+  for (const c of stats.accampamentiDettaglio) {
+    const k = Math.min(c.ordine, CAP);
+    const b = buckets.get(k) || { n: 0, vitaUtile: [], codaMorta: [], attivi: 0 };
+    b.n++; b.vitaUtile.push(c.vitaUtile); b.codaMorta.push(c.codaMorta); if (c.ancoraAttivo) b.attivi++;
+    buckets.set(k, b);
+  }
+  return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([ordine, b]) => ({
+    ordine: ordine === CAP ? `${CAP}+` : String(ordine), n: b.n,
+    vitaUtile: media(b.vitaUtile), codaMorta: media(b.codaMorta), pctAttivi: 100 * b.attivi / b.n,
+  }));
+}
+// raccoglie, per una partita, esposizioni/consegne per carta (id) e raccolte/spese/rimaste per
+// giocatore. cartaId è stabile nel batch: il mazzo è quello editato dall'utente, non rigenerato
+// per seed — a differenza delle mappe/regole, qui l'id identifica sempre la STESSA carta.
+function accumulaCarteERisorse(stats, state, mazzoById) {
+  const raccolteMap = {}, speseMap = {};
+  for (const g of state.giocatori) { raccolteMap[g.id] = 0; speseMap[g.id] = 0; }
+  for (const e of state.log) {
+    if (e.risorse > 0 && (e.tipo === 'pesca' || e.tipo === 'costruisci' || e.tipo === 'compraNodo')) raccolteMap[e.player] += e.risorse;
+    if (e.tipo === 'consegna') {
+      const cc = stats.cartePerId.get(e.cartaId) || { esposizioni: 0, turniEsposizione: [], consegne: 0, turniConsegna: [] };
+      cc.consegne++; cc.turniConsegna.push(e.n); stats.cartePerId.set(e.cartaId, cc);
+      const carta = mazzoById.get(e.cartaId);
+      if (carta) speseMap[e.player] += Object.values(carta.need).reduce((s, x) => s + x, 0);
+    }
+  }
+  for (const g of state.giocatori) {
+    const r = stats.risorsePerGiocatore[g.id];
+    if (!r) continue;
+    r.raccolte.push(raccolteMap[g.id]); r.spese.push(speseMap[g.id]); r.rimaste.push(g.droghe.length);
+  }
+}
+// risorse sprecate: quanto resta in mano a fine partita rispetto a quanto raccolto — un'economia
+// fluida consegna quasi tutto quello che raccoglie, un'economia intasata accumula.
+function risorseSprecateReport(stats, giocatori) {
+  return giocatori.map((id) => {
+    const r = stats.risorsePerGiocatore[id];
+    const raccolte = media(r.raccolte);
+    return { id, raccolte, spese: media(r.spese), rimaste: media(r.rimaste), pctSprecato: 100 * media(r.rimaste) / (raccolte || 1) };
+  });
+}
+// qualità delle carte: per ogni carta del mazzo — quante volte è entrata nel mercato (esposizioni),
+// quante consegnate, tasso di consegna, turno medio di esposizione/consegna. Ordinate per livello e
+// poi per tasso crescente: le "carte impossibili/ignorate" (tasso basso) emergono per prime.
+function qualitaCarte(stats, mazzo) {
+  return mazzo.map((c) => {
+    const cc = stats.cartePerId.get(c.id) || { esposizioni: 0, turniEsposizione: [], consegne: 0, turniConsegna: [] };
+    return {
+      id: c.id, livello: c.livello, need: c.need, punti: c.punti,
+      esposizioni: cc.esposizioni, consegne: cc.consegne,
+      tasso: cc.esposizioni ? 100 * cc.consegne / cc.esposizioni : 0,
+      turnoEsposizione: media(cc.turniEsposizione), turnoConsegna: cc.turniConsegna.length ? media(cc.turniConsegna) : null,
+    };
+  }).sort((a, b) => a.livello - b.livello || a.tasso - b.tasso);
+}
+// curva di maturazione della rete: rete media raggiunta a N turni dall'apertura (non il turno
+// assoluto — la sua ETÀ), per vedere se un accampamento smette presto di crescere o resta un "hub"
+// che riceve investimenti fino al finale. Contiamo un accampamento a un'età solo se la partita è
+// arrivata fin lì DOPO la sua apertura (turniResidui >= età) — altrimenti è censurato, non "piatto".
+function accumulaMaturazione(accampamenti) {
+  const mappa = new Map();
+  for (const c of accampamenti) {
+    for (let eta = 0; eta <= c.turniResidui; eta += BUCKET_TURNI) {
+      const rete = c.eta.filter((e) => e <= eta).length;
+      const r = mappa.get(eta) || { tot: 0, n: 0 };
+      r.tot += rete; r.n++; mappa.set(eta, r);
+    }
+  }
+  return [...mappa.entries()].sort((a, b) => a[0] - b[0]).map(([eta, r]) => ({ eta, rete: r.tot / r.n, n: r.n }));
+}
+// distribuzione scarto PV finale: bucket 0, 1, 2, 3-5, >5
+// bucket risorse finali in carico (0-2/3-5/6-8/9-11/12+) — correlato a winrate: chi finisce con
+// tante risorse ha semplicemente consegnato meno, o è una strategia che paga?
+function bucketRisorseFinali(n) {
+  return n <= 2 ? '0-2' : n <= 5 ? '3-5' : n <= 8 ? '6-8' : n <= 11 ? '9-11' : '12+';
+}
+const ORDINE_BUCKET_RISORSE = ['0-2', '3-5', '6-8', '9-11', '12+'];
+function bucketScarto(scarti) {
+  const b = { '0': 0, '1': 0, '2': 0, '3–5': 0, '>5': 0 };
+  for (const s of scarti) b[s === 0 ? '0' : s === 1 ? '1' : s === 2 ? '2' : s <= 5 ? '3–5' : '>5']++;
+  return b;
+}
+// risorse mancanti per completare una commessa non completata: 1 = "quasi fatta", 4+ = lontana.
+function bucketMancanti(arr) {
+  const b = { '1': 0, '2': 0, '3': 0, '4+': 0 };
+  for (const m of arr) b[m >= 4 ? '4+' : String(m)]++;
+  return b;
+}
+// distribuzione lunghezza catene: {1: n, 2: n, ...} — risponde a "serve un cap?"
+function distribuzioneCatene(catene) {
+  const b = new Map();
+  for (const c of catene) b.set(c, (b.get(c) || 0) + 1);
+  return [...b.entries()].sort((a, c) => a[0] - c[0]);
+}
+
+// rete finale: quanti accampamenti e quanti segmenti totali possiede un giocatore a FINE partita —
+// dimensione dell'engine (non il ritmo di apertura, già coperto da "Accampamenti/giocatore" nei KPI
+// normalizzati). Il rapporto segmenti/accampamento dice se la rete è tante catene corte o poche lunghe.
+function reteFinaleReport(stats) {
+  const acc = stats.reteFinale.accampamenti, seg = stats.reteFinale.segmenti;
+  const dist = new Map();
+  for (const n of acc) dist.set(n, (dist.get(n) || 0) + 1);
+  return {
+    media: media(acc), mediaSeg: media(seg), rapporto: media(seg) / (media(acc) || 1),
+    dist: [...dist.entries()].sort((a, b) => a[0] - b[0]), n: acc.length,
+  };
+}
+
+// flusso risorse per tipo: richiesta (domanda statica del mazzo) vs raccolta/consegnata/rimasta
+// (dal batch) — ognuna in % della propria colonna, per confrontare "quanto chiedono le carte" con
+// "quanto entra/esce/avanza" senza farsi confondere dalle scale diverse (mazzo fisso vs batch di N
+// partite). Discrimina: le carte chiedono troppo (richiesta alta, raccolta normale) o si raccoglie
+// troppo poco (richiesta normale, raccolta bassa) o si consuma tutto comunque (raccolta≈consegnata)?
+function flussoRisorseReport(stats, mazzo) {
+  const richiesta = Object.fromEntries(RISORSE.map((r) => [r, 0]));
+  for (const c of mazzo || []) for (const r of RISORSE) richiesta[r] += c.need[r] || 0;
+  const totRichiesta = Object.values(richiesta).reduce((s, x) => s + x, 0) || 1;
+  const totRaccolta = Object.values(stats.risorsePerTipo).reduce((s, x) => s + x.raccolta, 0) || 1;
+  const totConsegnata = Object.values(stats.risorsePerTipo).reduce((s, x) => s + x.consegnata, 0) || 1;
+  const totRimasta = Object.values(stats.risorsePerTipo).reduce((s, x) => s + x.rimasta, 0) || 1;
+  return RISORSE.map((r) => ({
+    r, richiesta: 100 * richiesta[r] / totRichiesta,
+    raccolta: 100 * stats.risorsePerTipo[r].raccolta / totRaccolta,
+    consegnata: 100 * stats.risorsePerTipo[r].consegnata / totConsegnata,
+    rimasta: 100 * stats.risorsePerTipo[r].rimasta / totRimasta,
+  }));
+}
+
+// heatmap completa: ogni hex costruibile, ordinato per frequenza desc, con turno medio di costruzione
+function heatmap(stats) {
+  return hexCostruibili()
+    .map((k) => { const r = stats.hex.get(k); return { k, c: r?.c || 0, turnoMedio: r ? r.turni / r.c : null }; })
+    .sort((a, b) => b.c - a.c);
+}
+
+// diagnosi automatica: il vantaggio (se c'è) segue il TURNO (posizione 0 = chi muove per primo) o la
+// LABEL (P1)? Nello stesso batch le due cose si scompongono solo se "primo giocatore" è 'alterna' —
+// a P1/P2 fisso coincidono per forza e la diagnosi non può distinguerle (lo si segnala esplicitamente).
+// Con N>2 "posizione 0 vs resto" e "P1 vs resto" restano la stessa domanda binaria, solo allargata.
+function osservazioni(stats, tot) {
+  const N = stats.N;
+  const attesa = tot / N;
+  const skewSeat = (stats.vittoriePosizione[0] - attesa) / tot;
+  const skewLabel = (stats.vittorie[stats.giocatori[0]] - attesa) / tot;
+  const O = ['OSSERVAZIONI'];
+  if (Math.abs(skewSeat) < 0.1 && Math.abs(skewLabel) < 0.1) {
+    O.push('• Nessun vantaggio di turno o di label rilevante in questo batch (scarti < 10 punti percentuali dall\'atteso).');
+  } else if (Math.abs(skewSeat) > Math.abs(skewLabel) * 1.3) {
+    O.push(`• Vantaggio legato al TURNO: chi muove per primo vince ${(100*stats.vittoriePosizione[0]/tot).toFixed(0)}% delle volte (atteso ${(100/N).toFixed(0)}%) — probabile effetto di design (ordine di turno), non un bug.`);
+  } else if (Math.abs(skewLabel) > Math.abs(skewSeat) * 1.3) {
+    O.push(`• Vantaggio legato alla LABEL ${stats.giocatori[0]}: vince ${(100*stats.vittorie[stats.giocatori[0]]/tot).toFixed(0)}% delle volte (atteso ${(100/N).toFixed(0)}%) anche quando non muove per prima — probabile bug del simulatore, non del gioco. Verifica con "Primo giocatore: Alterna".`);
+  } else {
+    O.push(`• Vantaggio ambiguo: turno e label si spostano insieme — probabile che coincidano perché "Primo giocatore" non è impostato su Alterna.`);
+  }
+  const mai = hexCostruibili().filter((k) => !stats.hex.has(k)).length;
+  if (mai > 0) O.push(`• ${mai} hex costruibili mai toccati in ${tot} partite.`);
+  const pareggioPct = 100 * stats.vittorie.pareggio / tot;
+  O.push(`• Pareggi: ${pareggioPct.toFixed(0)}%.`);
+  return O;
+}
+
+function reportTesto(stats, n, seedStart, giocatori, pkByPid, aiByPid, mercatoOpts) {
+  const L = [];
+  L.push(`PSYCADELIC SWAMP FEST — Batch di ${stats.turni.length}/${n} partite (seed ${seedStart}..${seedStart + n - 1})`);
+  L.push('', '█ HEALTH CHECK — parametri vitali del design (target tarati sul comportamento base, vedi HEALTH_TARGETS nel codice)');
+  for (const r of healthCheck(stats, giocatori)) L.push(`  ${(r.ok == null ? '·' : r.ok ? '✓' : '✗')} ${r.kpi.padEnd(32)} ${(r.valore == null ? '—' : r.valore.toFixed(1)).padStart(7)}   target ${r.target}`);
+  L.push('', `█ KPI NORMALIZZATI PER GIOCATORE (${giocatori.length}p — confrontabile fra batch a 2/3/4 giocatori)`);
+  for (const r of kpiNormalizzati(stats, giocatori)) L.push(`  ${r.kpi.padEnd(26)} ${r.valore.toFixed(1)}`);
+  L.push('', ...configBlock(mercatoOpts, giocatori, pkByPid, aiByPid), '');
+  L.push(`Turni medi: ${media(stats.turni).toFixed(1)}`);
+  L.push(`PV medi — ${giocatori.map((id) => `${id}: ${media(stats.pv[id]).toFixed(1)}`).join(' · ')}`);
+  const tot = stats.turni.length || 1;
+  L.push(`Vittorie per LABEL — ${giocatori.map((id) => `${id}: ${stats.vittorie[id]} (${(100*stats.vittorie[id]/tot).toFixed(0)}%)`).join(' · ')} · `
+    + `pareggio: ${stats.vittorie.pareggio} (${(100*stats.vittorie.pareggio/tot).toFixed(0)}%)`);
+  const NOME_POS = ['Primo', 'Secondo', 'Terzo', 'Quarto'];
+  L.push(`Vittorie per TURNO — ${stats.vittoriePosizione.map((v, i) => `${NOME_POS[i]}: ${v} (${(100*v/tot).toFixed(0)}%)`).join(' · ')} · `
+    + `pareggio: ${stats.pareggiPosizione} (${(100*stats.pareggiPosizione/tot).toFixed(0)}%)`);
+  L.push(`Turno medio prima pesca: ${media(stats.primaPesca).toFixed(1)}`);
+  const apertiTot = stats.festivalAperti.reduce((s, x) => s + x, 0) || 1;
+  const contribTot = stats.festivalContributi.reduce((s, x) => s + x, 0);
+  L.push(`Festival Collaborativo — aperti/partita: ${media(stats.festivalAperti).toFixed(1)} · `
+    + `contributi totali/aperti: ${(100*contribTot/apertiTot).toFixed(0)}% `
+    + `(${stats.N} giocatori → ogni fase ha fino a ${stats.N-1} occasioni di contributo)`);
+  L.push(`  Contributi ricevuti/partita — ${giocatori.map((id) => `${id}: ${media(stats.festivalPerGiocatore[id]).toFixed(1)}`).join(' · ')} · PV assegnati/partita: ${media(stats.festivalPV).toFixed(1)}`);
+  L.push('  Con contributo per livello — ' + [1, 2, 3].map((liv) => {
+    const pl = stats.festivalPerLivello[liv];
+    return `L${liv}: ${(100*pl.contributi/(pl.aperti||1)).toFixed(0)}%`;
+  }).join(' · '));
+  const pressTot = (stats.festivalPressioneRidotta + stats.festivalPressioneInvariata) || 1;
+  L.push(`  Festival Pressure — contributi che riducono le carte completabili nel mercato: `
+    + `${(100*stats.festivalPressioneRidotta/pressTot).toFixed(1)}% (${stats.festivalPressioneRidotta}/${pressTot}), il resto è "libero"`);
+  const biomaTot = (stats.biomaStesso + stats.biomaDiverso) || 1;
+  L.push(`Nuovi accampamenti — stesso bioma già usato: ${(100*stats.biomaStesso/biomaTot).toFixed(0)}% · `
+    + `bioma nuovo: ${(100*stats.biomaDiverso/biomaTot).toFixed(0)}% (${stats.biomaStesso+stats.biomaDiverso} accampamenti totali) · `
+    + `zone distinte/giocatore/partita: ${media(stats.zoneDistinte).toFixed(2)} (su 4 possibili)`);
+  L.push('', `DISTRIBUZIONE LUNGHEZZA CATENE (n=${stats.catene.length}, media ${media(stats.catene).toFixed(2)}, max ${Math.max(...stats.catene)}):`);
+  for (const [lung, c] of distribuzioneCatene(stats.catene)) L.push(`  ${lung}: ${c} (${(100*c/stats.catene.length).toFixed(0)}%)`);
+  { const rf = reteFinaleReport(stats);
+    L.push('', `RETE FINALE (dimensione dell'engine a fine partita, per giocatore, n=${rf.n}):`,
+      `  Accampamenti medi ....... ${rf.media.toFixed(1)}`,
+      `  Segmenti medi ........... ${rf.mediaSeg.toFixed(1)}`,
+      `  Segmenti per accampamento ${rf.rapporto.toFixed(1)}`, '  Distribuzione accampamenti finali:');
+    for (const [n, c] of rf.dist) L.push(`  ${String(n).padStart(2)}: ${c} (${(100*c/rf.n).toFixed(0)}%)`);
+  }
+  L.push('', 'TURNO 1ª/2ª/3ª CONSEGNA per posizione di turno:');
+  for (const k of [0, 1, 2]) {
+    const s = stats.consegnaPos[k];
+    L.push(`  ${k+1}ª consegna — ` + s.map((arr, pos) => `${NOME_POS[pos]}: ${media(arr).toFixed(1)} (n=${arr.length})`).join(' · '));
+  }
+  L.push('', `PERMANENZA CARTE SUL MERCATO: media ${media(stats.permanenzaCarte).toFixed(1)} turni (n=${stats.permanenzaCarte.length}) · `
+    + `mai vendute a fine partita: ${stats.carteMaiVendute}`);
+  if (stats.nodiFondati.some((x) => x > 0)) L.push('', `NODI FONDATI (regola "fonda nodo"): media ${media(stats.nodiFondati).toFixed(2)}/partita · totale ${stats.nodiFondati.reduce((s,x)=>s+x,0)}`);
+  L.push('', 'ECONOMIA DELLE AZIONI (media/partita, tutti i giocatori — fotografia del design):');
+  for (const r of economiaAzioni(stats)) L.push(`  ${r.nome.padEnd(18)} ${r.media.toFixed(1).padStart(6)}  (${r.pct.toFixed(0)}%)`);
+  const opp = stats.opportunita;
+  L.push('', `CONSEGNE DISPONIBILI IGNORATE (esisteva una carta completabile: l'hai consegnata o hai fatto altro?): `
+    + `disponibili ${opp.disponibili} · colte ${opp.colte} (${(100*opp.colte/(opp.disponibili||1)).toFixed(0)}%) · ignorate ${opp.disponibili-opp.colte} (${(100*(opp.disponibili-opp.colte)/(opp.disponibili||1)).toFixed(0)}%)`);
+  L.push('', `RENDIMENTO MARGINALE DEL TURNO (bucket di ${BUCKET_TURNI} turni, media/partita — solo le partite che arrivano fin lì):`,
+    '  turni       PV      risorse   accampamenti   n partite');
+  for (const r of rendimentoTurnoReport(stats.rendimentoTurno)) L.push(`  ${r.range.padEnd(10)}  ${r.pv.toFixed(1).padStart(6)}   `
+    + `${r.risorse.toFixed(1).padStart(7)}      ${r.accampamenti.toFixed(2).padStart(6)}       ${String(r.partite).padStart(6)}`);
+  L.push('', `ACCAMPAMENTI ATTIVI NEL TEMPO (bucket di ${BUCKET_TURNI} turni, quanti sono contemporaneamente aperti e non ancora abbandonati):`);
+  for (const r of accampamentiAttiviReport(stats.accampamentiAttivi)) L.push(`  ${r.range.padEnd(10)}  ${r.media.toFixed(2)} attivi`);
+  L.push('', `INVENTARIO MEDIO PER TURNO (bucket di ${BUCKET_TURNI} turni, risorse in carico medie per giocatore):`);
+  for (const r of inventarioTurnoReport(stats.inventarioTurno)) L.push(`  ${r.range.padEnd(10)}  ${r.media.toFixed(1)} risorse`);
+  L.push('', `STABILITÀ DEL LEADER (chi è in testa a un dato turno finisce per vincere?):`);
+  for (const r of leaderStabilitaReport(stats.leaderStabilita)) L.push(`  turno ${String(r.turno).padStart(3)}: ${r.pctStesso.toFixed(0)}% (n=${r.n})`);
+  const vol = volatilitaLeadershipReport(stats.volatilitaLeadership);
+  L.push('', `VOLATILITÀ DELLA LEADERSHIP (quanto spesso cambia mano il comando della partita, n=${vol.n}):`,
+    `  cambi medi: ${vol.mediaCambi.toFixed(1)} · 1° cambio: turno ${vol.turnoPrimoCambio != null ? vol.turnoPrimoCambio.toFixed(1) : '—'} · `
+    + `ultimo cambio: turno ${vol.turnoUltimoCambio != null ? vol.turnoUltimoCambio.toFixed(1) : '—'} · senza cambi: ${vol.pctZeroCambi.toFixed(0)}%`);
+  for (const [k, c] of Object.entries(vol.bucket)) L.push(`  ${k.padEnd(10)}: ${c} (${(100*c/vol.tot).toFixed(0)}%)`);
+  L.push('', 'AZIONE SUCCESSIVA (stesso giocatore, quasi-Markov — dopo questa azione, la prossima è...):');
+  for (const r of transizioniReport(stats.transizioni))
+    L.push(`  ${r.da} (n=${r.tot}): ` + r.dist.map((d) => `${d.a} ${d.pct.toFixed(0)}%`).join(' · '));
+  L.push('', 'CRONOLOGIA MEDIA DELLA PARTITA (turno medio a cui accade, n = partite che ci sono arrivate):');
+  for (const r of cronologiaReport(stats.cronologia)) L.push(`  ${r.nome.padEnd(24)} turno ${r.turno.toFixed(1).padStart(6)}  (n=${r.n})`);
+  const uc = ultimaConsegnaReport(stats.ultimaConsegnaDettaglio);
+  L.push('', `VALORE DELL'ULTIMA CONSEGNA: turno medio ${uc.turno.toFixed(1)} · PV medi ${uc.pv.toFixed(1)} · chiude la partita nel ${uc.pctChiude.toFixed(0)}% dei casi (n=${uc.n})`);
+  const rc = raccoltaConsegnaReport(stats.raccoltaConsegna);
+  L.push('', `TEMPO RACCOLTA → CONSEGNA (turni fra l'ultimo ingresso di risorse e la consegna successiva, stesso giocatore): media ${rc.media.toFixed(1)} (n=${rc.n})`);
+  for (const [k, c] of Object.entries(rc.bucket)) L.push(`  ${k.padEnd(10)}: ${c} (${(100*c/(rc.n||1)).toFixed(0)}%)`);
+  L.push('', ...osservazioni(stats, tot));
+  L.push('', 'DISTRIBUZIONE SCARTO PV finale (max-min tra tutti i giocatori):');
+  const buckets = bucketScarto(stats.scarto);
+  for (const [k, c] of Object.entries(buckets)) L.push(`  ${k.padEnd(4)}: ${c} (${(100*c/tot).toFixed(0)}%)`);
+  L.push('', 'SCOMPOSIZIONE PV per fonte (media per partita, tutti i giocatori):');
+  for (const liv of [1, 2, 3]) L.push(`  Carte L${liv}: ${media(stats.pvLivello[liv]).toFixed(1)}`);
+  if (mercatoOpts.risorseVittoria) {
+    const bf = stats.bonusFinale;
+    L.push(`  Bonus risorse finale (ogni ${mercatoOpts.risorseVittoria.risorse} risorse → +${mercatoOpts.risorseVittoria.punti} PV): `
+      + giocatori.map((id) => `${id}: ${media(bf.bonus[id]).toFixed(1)}`).join(' · '));
+  } else {
+    L.push('  Bonus rete / altro: non esiste nell\'engine attuale — punti vengono SOLO da carte consegnate');
+  }
+  if (mercatoOpts.risorseVittoria) {
+    const bf = stats.bonusFinale;
+    L.push('', 'BONUS FINE PARTITA:');
+    L.push('  ' + ['', ...giocatori].map((s) => String(s).padStart(9)).join(''));
+    L.push('  Risorse finali' + giocatori.map((id) => media(bf.droghe[id]).toFixed(1).padStart(9)).join(''));
+    L.push('  PV bonus     ' + giocatori.map((id) => media(bf.bonus[id]).toFixed(1).padStart(9)).join(''));
+    const totBonus = giocatori.reduce((s, id) => s + bf.bonus[id].length, 0) || 1;
+    for (const [k, c] of Object.entries(bf.bonusDist).sort((a, b) => a[0] - b[0]))
+      L.push(`  partite con ${k} PV bonus`.padEnd(24) + `${(100*c/totBonus).toFixed(0)}%`.padStart(9));
+    L.push('', `PARTITE DECISE DAL BONUS (n=${tot}):`);
+    L.push(`  nessun cambiamento    ${(100*bf.esito.nessunCambiamento/tot).toFixed(0)}%`);
+    L.push(`  pareggio risolto      ${(100*bf.esito.pareggioRisolto/tot).toFixed(0)}%`);
+    L.push(`  vincitore ribaltato   ${(100*bf.esito.ribaltato/tot).toFixed(0)}%`);
+    L.push('', 'BONUS PER POSIZIONE IN CLASSIFICA (il bonus premia chi vince già?):');
+    bf.perClassifica.forEach((arr, pos) => L.push(`  ${(NOME_POS[pos] || `${pos+1}°`).padEnd(10)} +${media(arr).toFixed(1)} PV (n=${arr.length})`));
+  }
+  L.push('', 'INVENTARIO FINALE vs WINRATE (risorse in carico a fine partita — chi ne accumula tante vince di più o di meno?):');
+  for (const k of ORDINE_BUCKET_RISORSE) { const r = stats.inventarioWinrate[k];
+    if (r) L.push(`  ${k.padEnd(6)}: winrate ${(100*r.vittorie/r.partite).toFixed(0)}% (n=${r.partite})`); }
+  L.push('', 'CONSEGNE per livello per giocatore (numero carte, media per partita — non PV):');
+  L.push('  ' + ['     ', ...giocatori].map((s) => String(s).padStart(6)).join(''));
+  for (const liv of [1, 2, 3]) L.push('  L' + liv + '  ' + giocatori.map((id) =>
+    media(stats.consegneLivelloPerGiocatore[id][liv]).toFixed(1).padStart(6)).join(''));
+  L.push('', 'NODI più costruiti:');
+  for (const [k, c] of top(stats.nodi, 5)) L.push(`  ${k}: ${c}`);
+  L.push('', 'NODO INIZIALE (primo costruisci/pesca del giocatore) — winrate:');
+  for (const [k, r] of [...stats.nodoIniziale.entries()].sort((a, b) => b[1].partite - a[1].partite))
+    L.push(`  ${k}: ${(100*r.vittorie/r.partite).toFixed(0)}% (n=${r.partite})`);
+  L.push('', 'RISORSE MEDIE RACCOLTE per uso (costruisci+pesca), per nodo:');
+  for (const [k, r] of [...stats.nodiRisorse.entries()].sort((a, b) => b[1].usi - a[1].usi))
+    L.push(`  ${k}: ${(r.risorse/r.usi).toFixed(2)} (n=${r.usi})`);
+  const nodoApTot = (stats.nodoApertura.libero + stats.nodoApertura.condiviso + stats.nodoApertura.conteso) || 1;
+  L.push('', `APERTURA NUOVI ACCAMPAMENTI (n=${nodoApTot}) — il nodo al momento del seed era:`);
+  L.push(`  libero (nessuno): ${(100*stats.nodoApertura.libero/nodoApTot).toFixed(0)}% · `
+    + `condiviso (già lui): ${(100*stats.nodoApertura.condiviso/nodoApTot).toFixed(0)}% · `
+    + `conteso (già un avversario): ${(100*stats.nodoApertura.conteso/nodoApTot).toFixed(0)}%`);
+  L.push('', 'GIOCATORI PRESENTI per nodo (quanti giocatori distinti hanno un seed lì, per partita):');
+  for (const [k, r] of [...stats.nodoPresenza.entries()].sort((a, b) => (b[1].sommaGiocatori/b[1].partite) - (a[1].sommaGiocatori/a[1].partite))) {
+    const distr = Object.entries(r.distribuzione).sort((a, b) => a[0] - b[0])
+      .map(([g, c]) => `${g}:${(100*c/r.partite).toFixed(0)}%`).join(' ');
+    L.push(`  ${k}: media ${(r.sommaGiocatori/r.partite).toFixed(1)} (n=${r.partite}) — ${distr}`);
+  }
+  L.push('', 'FINE PARTITA — motivo (regola accampamentiMax):');
+  L.push(`  esaurimento commesse (mercato): ${stats.fineMotivo.mercato} (${(100*stats.fineMotivo.mercato/tot).toFixed(0)}%)`);
+  L.push(`  esaurimento accampamenti: ${stats.fineMotivo.accampamenti} (${(100*stats.fineMotivo.accampamenti/tot).toFixed(0)}%)`);
+  const accTot = accampamentiPerGiocatore(stats, giocatori);
+  L.push('', 'ACCAMPAMENTI APERTI TOTALI (per giocatore, su tutto il batch):');
+  for (const id of giocatori) L.push(`  ${id}: ${accTot[id]} (${(accTot[id]/tot).toFixed(2)} / partita)`);
+  L.push('', 'VALORE DI UN ACCAMPAMENTO per ordine di apertura (1° del giocatore, 2°, ... — 6+ accorpati):',
+    '  PV e consegne non sono attribuibili: le risorse sono un pool fungibile per giocatore, non tracciate per accampamento.',
+    '  ordine    n    turno apert.   rete finale   costruzioni   raccolte   risorse');
+  for (const r of accampamentiPerOrdine(stats)) L.push(`  ${r.ordine.padEnd(8)}  ${String(r.n).padStart(4)}   `
+    + `${r.turno.toFixed(1).padStart(11)}   ${r.rete.toFixed(2).padStart(11)}   ${r.costruzioni.toFixed(2).padStart(11)}   `
+    + `${r.raccolte.toFixed(2).padStart(8)}   ${r.risorse.toFixed(2).padStart(7)}`);
+  L.push('', `CURVA DI MATURAZIONE DELLA RETE (rete media a N turni dall'apertura — solo accampamenti che hanno "vissuto" fin lì):`);
+  for (const r of accumulaMaturazione(stats.accampamentiDettaglio)) L.push(`  +${String(r.eta).padStart(3)} turni: rete ${r.rete.toFixed(2)} (n=${r.n})`);
+  L.push('', 'TEMPO MORTO DEGLI ACCAMPAMENTI per ordine (vita utile = apertura→ultima attività, coda morta = ultima attività→fine partita):',
+    '  ordine    n    vita utile   coda morta   % ancora attivi a fine partita');
+  for (const r of tempoMortoPerOrdine(stats)) L.push(`  ${r.ordine.padEnd(8)}  ${String(r.n).padStart(4)}   `
+    + `${r.vitaUtile.toFixed(1).padStart(9)}   ${r.codaMorta.toFixed(1).padStart(9)}   ${r.pctAttivi.toFixed(0).padStart(6)}%`);
+  L.push('', 'RISORSE SPRECATE (media/partita per giocatore — rimaste = inventario a fine partita):',
+    '  giocatore   raccolte   spese   rimaste   % sprecato');
+  for (const r of risorseSprecateReport(stats, giocatori)) L.push(`  ${r.id.padEnd(9)}   `
+    + `${r.raccolte.toFixed(1).padStart(8)}   ${r.spese.toFixed(1).padStart(5)}   ${r.rimaste.toFixed(1).padStart(7)}   ${r.pctSprecato.toFixed(0).padStart(9)}%`);
+  { const mi = stats.motivoInutilizzo, miTot = Object.values(mi).reduce((s, x) => s + x, 0) || 1;
+    L.push('', `MOTIVO INUTILIZZO (perché una risorsa rimane in mano a fine partita — n=${miTot} unità):`,
+      `  Commessa disponibile (errore IA) .. ${mi.commessaDisponibile} (${(100*mi.commessaDisponibile/miTot).toFixed(0)}%)`,
+      `  Mancavano altre risorse ........... ${mi.mancavanoAltreRisorse} (${(100*mi.mancavanoAltreRisorse/miTot).toFixed(0)}%)`,
+      `  Nessuna commessa la richiedeva .... ${mi.nessunaCommessa} (${(100*mi.nessunaCommessa/miTot).toFixed(0)}%)`,
+      `  Partita terminata (mai pescata) ... ${mi.partitaTerminata} (${(100*mi.partitaTerminata/miTot).toFixed(0)}%)`);
+  }
+  { const rm = stats.risorseMancantiPerCommessa, rmTot = rm.length || 1, rmBucket = bucketMancanti(rm);
+    L.push('', `RISORSE MANCANTI PER COMMESSA NON COMPLETATA (n=${rm.length} — "vicino o lontano dall'equilibrio?"):`);
+    for (const [k, c] of Object.entries(rmBucket)) L.push(`  ${k.padStart(2)}: ${c} (${(100*c/rmTot).toFixed(0)}%)`);
+    L.push('', `QUALE RISORSA MANCA (% di commesse non completate in cui compare come mancante — una commessa può contarne più di una, n=${rm.length}):`);
+    for (const [r, c] of Object.entries(stats.risorseMancantiPerTipo).sort((a, b) => b[1] - a[1]))
+      L.push(`  ${(RIS_EMOJI[r] || '') + ' ' + r}`.padEnd(20) + `${c} (${(100*c/rmTot).toFixed(0)}%)`);
+  }
+  L.push('', 'FLUSSO RISORSE PER TIPO (ogni colonna in % di se stessa — richiesta dal mazzo vs raccolta/consegnata/rimasta nel batch):',
+    '  risorsa            richiesta   raccolta   consegnata   rimasta');
+  for (const r of flussoRisorseReport(stats, mercatoOpts.mazzo || [])) L.push(`  ${(RIS_EMOJI[r.r] || '') + ' ' + r.r}`.padEnd(21)
+    + `${r.richiesta.toFixed(0).padStart(8)}%   ${r.raccolta.toFixed(0).padStart(7)}%   ${r.consegnata.toFixed(0).padStart(9)}%   ${r.rimasta.toFixed(0).padStart(6)}%`);
+  L.push('', 'RESA PER COSTRUZIONE NEL BIOMA (risorse ottenute in media ogni volta che si costruisce in quella zona — non contesa del nodo, rendimento reale):');
+  for (const [r, d] of Object.entries(stats.produzionePerBioma)) L.push(`  ${(RIS_EMOJI[r] || '') + ' ' + r}`.padEnd(20)
+    + `${(d.risorse / (d.costruzioni || 1)).toFixed(2)} risorse/costruzione (n=${d.costruzioni})`);
+  L.push('', 'QUALITÀ DELLE CARTE (esposizioni = volte apparse nel mercato, tasso = % consegnate sulle esposizioni):',
+    '  carta      L   esposizioni   consegne   tasso   turno esp.   turno consegna');
+  for (const c of qualitaCarte(stats, mercatoOpts.mazzo || [])) L.push(`  ${c.id.padEnd(9)}  ${c.livello}   `
+    + `${String(c.esposizioni).padStart(9)}   ${String(c.consegne).padStart(8)}   ${c.tasso.toFixed(0).padStart(4)}%   `
+    + `${c.turnoEsposizione.toFixed(1).padStart(9)}   ${c.turnoConsegna != null ? c.turnoConsegna.toFixed(1).padStart(13) : '—'.padStart(13)}`);
+  L.push('', 'UTILIZZO POZIONI (sperimentale — commesse completate diventano poteri monouso invece di essere scartate):',
+    '  pozione          ottenute   usate   %uso   turno ottenim.   turno uso   permanenza   inutilizzate');
+  for (const p of pozioniReport(stats)) L.push(`  ${p.tipo.padEnd(15)}  ${String(p.ottenute).padStart(8)}   `
+    + `${String(p.usate).padStart(5)}   ${p.pctUso.toFixed(0).padStart(4)}%   ${p.turnoOttenimento.toFixed(1).padStart(13)}   `
+    + `${p.turnoUtilizzo != null ? p.turnoUtilizzo.toFixed(1).padStart(9) : '—'.padStart(9)}   `
+    + `${p.permanenza != null ? p.permanenza.toFixed(1).padStart(10) : '—'.padStart(10)}   ${String(p.inutilizzate).padStart(12)}`);
+  L.push('', 'VALORE ALLA VITTORIA (fra chi ha OTTENUTO la pozione: usata almeno 1 volta vs mai usata):',
+    '  pozione          winrate uso   winrate non-uso   PV con uso   PV senza uso');
+  for (const p of pozioniReport(stats)) L.push(`  ${p.tipo.padEnd(15)}  `
+    + `${p.winrateConUso != null ? (p.winrateConUso.toFixed(0)+'% (n='+p.nConUso+')').padStart(11) : '—'.padStart(11)}   `
+    + `${p.winrateSenzaUso != null ? (p.winrateSenzaUso.toFixed(0)+'% (n='+p.nSenzaUso+')').padStart(15) : '—'.padStart(15)}   `
+    + `${p.pvConUso != null ? p.pvConUso.toFixed(1).padStart(10) : '—'.padStart(10)}   ${p.pvSenzaUso != null ? p.pvSenzaUso.toFixed(1).padStart(12) : '—'.padStart(12)}`);
+  L.push('', 'SWING DELLA POZIONE (PV/posizione 1 turno prima → 10 turni dopo l\'uso, censurato se la partita finisce prima):',
+    '  pozione          Δ PV   Δ posizione   n');
+  for (const p of pozioniSwingReport(stats)) L.push(`  ${p.tipo.padEnd(15)}  `
+    + `${p.deltaPV != null ? (p.deltaPV>=0?'+':'')+p.deltaPV.toFixed(1) : '—'}`.padEnd(28)
+    + `${p.deltaRank != null ? (p.deltaRank>=0?'+':'')+p.deltaRank.toFixed(1) : '—'}   (n=${p.n})`);
+  L.push('', 'VALORE DELLA POZIONE PER LIVELLO (ruolo nella progressione della partita: L1 immediate? L2 tattiche? L3 esplosive?):',
+    '  L   pozione          % uso   permanenza   Δ PV swing   winrate uso');
+  for (const p of pozioniPerLivelloReport(stats)) L.push(`  ${p.livello}   ${p.tipo.padEnd(15)}  `
+    + `${p.pctUso != null ? p.pctUso.toFixed(0)+'%' : '—'}`.padEnd(7)
+    + `${p.permanenza != null ? p.permanenza.toFixed(1) : '—'}`.padEnd(13)
+    + `${p.deltaPV != null ? (p.deltaPV>=0?'+':'')+p.deltaPV.toFixed(1)+' (n='+p.nSwing+')' : '—'}`.padEnd(13)
+    + `${p.winrateConUso != null ? p.winrateConUso.toFixed(0)+'% (n='+p.nConUso+')' : '—'}`);
+  L.push('', 'MECCANICA RICARICA (usi medi per partita, risorse investite in ricarica, cariche residue a fine partita, turno medio di acquisizione):',
+    '  pozione          usi/partita   ris. ricarica   cariche residue   turno acquis.');
+  for (const p of pozioniReport(stats)) L.push(`  ${p.tipo.padEnd(15)}  `
+    + `${p.usiMedi != null ? p.usiMedi.toFixed(2).padStart(10) : '—'.padStart(10)}   `
+    + `${p.risorseRicaricaMedi != null ? p.risorseRicaricaMedi.toFixed(2).padStart(13) : '—'.padStart(13)}   `
+    + `${p.caricheResidueMedie != null ? p.caricheResidueMedie.toFixed(2).padStart(15) : '—'.padStart(15)}   `
+    + `${p.turnoOttenimento != null ? p.turnoOttenimento.toFixed(1).padStart(13) : '—'.padStart(13)}`);
+  L.push('', 'RITMO — costruzioni (rete) per nuovo accampamento (seed), per giocatore:');
+  for (const id of giocatori) {
+    const costrTot = stats.costruzioniPerGiocatore[id].reduce((s, x) => s + x, 0);
+    L.push(`  ${id}: ${costrTot} costruzioni / ${accTot[id]} accampamenti = ${(costrTot/(accTot[id]||1)).toFixed(1)} per accampamento`);
+  }
+  L.push('', 'SATURAZIONE NODO (totale accampamenti aperti per giocatore, su tutto il batch):');
+  for (const [k, sat] of [...stats.nodoSaturazione.entries()].sort((a, b) =>
+    Object.values(b[1]).reduce((s, x) => s + x, 0) - Object.values(a[1]).reduce((s, x) => s + x, 0))) {
+    L.push(`  ${k}: ` + giocatori.map((id) => `${id} ${sat[id] || 0}`).join(' · '));
+  }
+  L.push('', 'TURNO MEDIO DI APERTURA per tipo (isola l\'effetto tempo dal tipo di nodo):');
+  for (const cat of ['libero', 'condiviso', 'conteso'])
+    L.push(`  ${cat}: turno ${media(stats.aperturaTurno[cat]).toFixed(1)} (n=${stats.aperturaTurno[cat].length})`);
+  const hm = heatmap(stats), mai = hm.filter((h) => h.c === 0);
+  L.push('', `HEATMAP hex costruibili (${hm.length} totali, ${mai.length} mai costruiti):`,
+    '  hex          costruzioni  turno medio');
+  for (const h of hm) L.push(`  ${h.k.padEnd(12)}  ${String(h.c).padStart(4)}         ${h.turnoMedio ? h.turnoMedio.toFixed(1) : '—'}`);
+  return L.join('\n');
+}
+
+function renderHTML(stats, n, seedStart, giocatori, pkByPid, aiByPid, mercatoOpts) {
+  const tot = stats.turni.length || 1;
+  const pct = (x) => (100 * x / tot).toFixed(0) + '%';
+  const NOME_POS = ['Primo', 'Secondo', 'Terzo', 'Quarto'];
+  let html = `<h3>█ Health check</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">Parametri vitali del design — target tarati sul comportamento base, vedi HEALTH_TARGETS nel codice.</p>
+    <table><tr><th></th><th>KPI</th><th>Valore</th><th>Target</th></tr>
+      ${healthCheck(stats, giocatori).map((r) => `<tr><td>${r.ok == null ? '·' : r.ok ? '✓' : '✗'}</td><td>${r.kpi}</td><td>${r.valore == null ? '—' : r.valore.toFixed(1)}</td><td>${r.target}</td></tr>`).join('')}
+    </table>
+    <h3>█ KPI normalizzati per giocatore</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">${giocatori.length}p — confrontabile fra batch a 2/3/4 giocatori: il carico che tocca a ciascuno, non il totale di partita.</p>
+    <table><tr><th>KPI</th><th>Valore</th></tr>
+      ${kpiNormalizzati(stats, giocatori).map((r) => `<tr><td>${r.kpi}</td><td>${r.valore.toFixed(1)}</td></tr>`).join('')}
+    </table>
+    <pre>${configBlock(mercatoOpts, giocatori, pkByPid, aiByPid).join('\n')}</pre>
+    <table><tr><th>Per LABEL</th>${giocatori.map((id) => `<th>${id}</th>`).join('')}<th>Pareggio</th></tr>
+    <tr><td>Vittorie</td>${giocatori.map((id) => `<td>${stats.vittorie[id]} (${pct(stats.vittorie[id])})</td>`).join('')}
+      <td>${stats.vittorie.pareggio} (${pct(stats.vittorie.pareggio)})</td></tr>
+    <tr><td>PV medi</td>${giocatori.map((id) => `<td>${media(stats.pv[id]).toFixed(1)}</td>`).join('')}<td>—</td></tr></table>
+    <table><tr><th>Per TURNO</th>${stats.vittoriePosizione.map((_, i) => `<th>${NOME_POS[i]}</th>`).join('')}<th>Pareggio</th></tr>
+    <tr><td>Vittorie</td>${stats.vittoriePosizione.map((v) => `<td>${v} (${pct(v)})</td>`).join('')}
+      <td>${stats.pareggiPosizione} (${pct(stats.pareggiPosizione)})</td></tr></table>
+    <pre>${osservazioni(stats, tot).join('\n')}</pre>
+    <p>Partite valide: ${stats.turni.length}/${n} · Turni medi: ${media(stats.turni).toFixed(1)}
+      · Turno medio prima pesca: ${media(stats.primaPesca).toFixed(1)}</p>
+    <table><tr><th>Festival Collaborativo</th><th></th></tr>
+      <tr><td>Aperti/partita</td><td>${media(stats.festivalAperti).toFixed(1)}</td></tr>
+      <tr><td>Contributi totali/aperti</td><td>${(100*stats.festivalContributi.reduce((s,x)=>s+x,0)/(stats.festivalAperti.reduce((s,x)=>s+x,0)||1)).toFixed(0)}%</td></tr>
+      ${giocatori.map((id) => `<tr><td>Contributi ricevuti/partita</td><td>${id}: ${media(stats.festivalPerGiocatore[id]).toFixed(1)}</td></tr>`).join('')}
+      <tr><td>PV assegnati/partita</td><td>${media(stats.festivalPV).toFixed(1)}</td></tr>
+      ${[1,2,3].map((liv) => { const pl = stats.festivalPerLivello[liv];
+        return `<tr><td>Con contributo L${liv}</td><td>${(100*pl.contributi/(pl.aperti||1)).toFixed(0)}% (${pl.aperti} aperti)</td></tr>`; }).join('')}
+      <tr><td>Festival Pressure (riduce completabili)</td><td>${(100*stats.festivalPressioneRidotta/((stats.festivalPressioneRidotta+stats.festivalPressioneInvariata)||1)).toFixed(1)}% (${stats.festivalPressioneRidotta}/${stats.festivalPressioneRidotta+stats.festivalPressioneInvariata})</td></tr>
+    </table>
+    <table><tr><th>Nuovi accampamenti</th><th></th></tr>
+      <tr><td>Stesso bioma già usato</td><td>${(100*stats.biomaStesso/((stats.biomaStesso+stats.biomaDiverso)||1)).toFixed(0)}%</td></tr>
+      <tr><td>Bioma nuovo</td><td>${(100*stats.biomaDiverso/((stats.biomaStesso+stats.biomaDiverso)||1)).toFixed(0)}%</td></tr>
+      <tr><td>Zone distinte/giocatore/partita</td><td>${media(stats.zoneDistinte).toFixed(2)} (su 4)</td></tr>
+    </table>
+    <p>Distribuzione lunghezza catene — n=${stats.catene.length}, media ${media(stats.catene).toFixed(2)}, max ${stats.catene.length ? Math.max(...stats.catene) : 0}</p>
+    <table><tr><th>Lunghezza</th><th>Catene</th></tr>
+      ${distribuzioneCatene(stats.catene).map(([lung, c]) => `<tr><td>${lung}</td><td>${c} (${(100*c/stats.catene.length).toFixed(0)}%)</td></tr>`).join('')}
+    </table>`;
+  { const rf = reteFinaleReport(stats);
+    html += `<h3>Rete finale</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">Dimensione dell'engine a fine partita, per giocatore (n=${rf.n}) — non il ritmo di apertura (già in "Accampamenti/giocatore" nei KPI normalizzati), ma quanto è grande la rete quando la partita finisce.</p>
+    <table><tr><th></th><th></th></tr>
+      <tr><td>Accampamenti medi</td><td>${rf.media.toFixed(1)}</td></tr>
+      <tr><td>Segmenti medi</td><td>${rf.mediaSeg.toFixed(1)}</td></tr>
+      <tr><td>Segmenti per accampamento</td><td>${rf.rapporto.toFixed(1)}</td></tr>
+    </table>
+    <table><tr><th>Accampamenti finali</th><th>Partite-giocatore</th></tr>
+      ${rf.dist.map(([n, c]) => `<tr><td>${n}</td><td>${c} (${(100*c/rf.n).toFixed(0)}%)</td></tr>`).join('')}
+    </table>`;
+  }
+  html += `<table><tr><th>Turno consegna</th>${stats.vittoriePosizione.map((_, i) => `<th>${NOME_POS[i]}</th>`).join('')}</tr>
+      ${[0,1,2].map((k) =>
+        `<tr><td>${k+1}ª</td>${stats.consegnaPos[k].map((arr) => `<td>${media(arr).toFixed(1)} (n=${arr.length})</td>`).join('')}</tr>`).join('')}
+    </table>
+    <p>Permanenza carte sul mercato: media ${media(stats.permanenzaCarte).toFixed(1)} turni (n=${stats.permanenzaCarte.length}) ·
+      mai vendute a fine partita: ${stats.carteMaiVendute}</p>
+    ${stats.nodiFondati.some((x) => x > 0) ? `<p>Nodi fondati (regola "fonda nodo"): media ${media(stats.nodiFondati).toFixed(2)}/partita · totale ${stats.nodiFondati.reduce((s,x)=>s+x,0)}</p>` : ''}
+    <p>Economia delle azioni (media/partita, tutti i giocatori — fotografia del design):</p>
+    <table><tr><th>Azione</th><th>Media</th><th>%</th></tr>
+      ${economiaAzioni(stats).map((r) => `<tr><td>${r.nome}</td><td>${r.media.toFixed(1)}</td><td>${r.pct.toFixed(0)}%</td></tr>`).join('')}
+    </table>
+    <p>Consegne disponibili ignorate (esisteva una carta completabile: l'hai consegnata o hai fatto altro?):</p>
+    <table><tr><th>Disponibili</th><th>Colte</th><th>Ignorate</th></tr>
+      <tr><td>${stats.opportunita.disponibili}</td><td>${stats.opportunita.colte} (${(100*stats.opportunita.colte/(stats.opportunita.disponibili||1)).toFixed(0)}%)</td>
+      <td>${stats.opportunita.disponibili-stats.opportunita.colte} (${(100*(stats.opportunita.disponibili-stats.opportunita.colte)/(stats.opportunita.disponibili||1)).toFixed(0)}%)</td></tr>
+    </table>
+    <p>Rendimento marginale del turno (bucket di ${BUCKET_TURNI} turni, media/partita — solo le partite che arrivano fin lì):</p>
+    <table><tr><th>Turni</th><th>PV</th><th>Risorse</th><th>Accampamenti</th><th>n partite</th></tr>
+      ${rendimentoTurnoReport(stats.rendimentoTurno).map((r) =>
+        `<tr><td>${r.range}</td><td>${r.pv.toFixed(1)}</td><td>${r.risorse.toFixed(1)}</td><td>${r.accampamenti.toFixed(2)}</td><td>${r.partite}</td></tr>`).join('')}
+    </table>
+    <p>Accampamenti attivi nel tempo (bucket di ${BUCKET_TURNI} turni, quanti sono contemporaneamente aperti e non ancora abbandonati):</p>
+    <table><tr><th>Turni</th><th>Attivi medi</th></tr>
+      ${accampamentiAttiviReport(stats.accampamentiAttivi).map((r) => `<tr><td>${r.range}</td><td>${r.media.toFixed(2)}</td></tr>`).join('')}
+    </table>
+    <p>Inventario medio per turno (bucket di ${BUCKET_TURNI} turni, risorse in carico medie per giocatore):</p>
+    <table><tr><th>Turni</th><th>Risorse medie</th></tr>
+      ${inventarioTurnoReport(stats.inventarioTurno).map((r) => `<tr><td>${r.range}</td><td>${r.media.toFixed(1)}</td></tr>`).join('')}
+    </table>
+    <p>Stabilità del leader (chi è in testa a un dato turno finisce per vincere?):</p>
+    <table><tr><th>Turno</th><th>% stesso vincitore</th><th>n</th></tr>
+      ${leaderStabilitaReport(stats.leaderStabilita).map((r) => `<tr><td>${r.turno}</td><td>${r.pctStesso.toFixed(0)}%</td><td>${r.n}</td></tr>`).join('')}
+    </table>`;
+  { const vol = volatilitaLeadershipReport(stats.volatilitaLeadership);
+    html += `
+    <p>Volatilità della leadership (quanto spesso cambia mano il comando della partita, n=${vol.n}):
+      cambi medi ${vol.mediaCambi.toFixed(1)} · 1° cambio turno ${vol.turnoPrimoCambio != null ? vol.turnoPrimoCambio.toFixed(1) : '—'} ·
+      ultimo cambio turno ${vol.turnoUltimoCambio != null ? vol.turnoUltimoCambio.toFixed(1) : '—'} · senza cambi ${vol.pctZeroCambi.toFixed(0)}%</p>
+    <table><tr><th>Cambi</th><th>Partite</th></tr>
+      ${Object.entries(vol.bucket).map(([k, c]) => `<tr><td>${k}</td><td>${c} (${(100*c/vol.tot).toFixed(0)}%)</td></tr>`).join('')}
+    </table>`; }
+  html += `
+    <p>Azione successiva (stesso giocatore, quasi-Markov — dopo questa azione, la prossima è...):</p>
+    <table><tr><th>Azione</th><th>n</th><th>Distribuzione successiva</th></tr>
+      ${transizioniReport(stats.transizioni).map((r) =>
+        `<tr><td>${r.da}</td><td>${r.tot}</td><td>${r.dist.map((d) => `${d.a} ${d.pct.toFixed(0)}%`).join(' · ')}</td></tr>`).join('')}
+    </table>
+    <p>Cronologia media della partita (turno medio a cui accade, n = partite che ci sono arrivate):</p>
+    <table><tr><th>Momento</th><th>Turno medio</th><th>n</th></tr>
+      ${cronologiaReport(stats.cronologia).map((r) => `<tr><td>${r.nome}</td><td>${r.turno.toFixed(1)}</td><td>${r.n}</td></tr>`).join('')}
+    </table>
+    <p>Valore dell'ultima consegna: turno medio ${ultimaConsegnaReport(stats.ultimaConsegnaDettaglio).turno.toFixed(1)} ·
+      PV medi ${ultimaConsegnaReport(stats.ultimaConsegnaDettaglio).pv.toFixed(1)} ·
+      chiude la partita nel ${ultimaConsegnaReport(stats.ultimaConsegnaDettaglio).pctChiude.toFixed(0)}% dei casi (n=${ultimaConsegnaReport(stats.ultimaConsegnaDettaglio).n})</p>
+    <p>Tempo raccolta → consegna (turni fra l'ultimo ingresso di risorse e la consegna successiva, stesso giocatore): media ${raccoltaConsegnaReport(stats.raccoltaConsegna).media.toFixed(1)} (n=${raccoltaConsegnaReport(stats.raccoltaConsegna).n})</p>
+    <table><tr><th>Gap</th><th>Consegne</th></tr>
+      ${Object.entries(raccoltaConsegnaReport(stats.raccoltaConsegna).bucket).map(([k, c]) =>
+        `<tr><td>${k}</td><td>${c} (${(100*c/(raccoltaConsegnaReport(stats.raccoltaConsegna).n||1)).toFixed(0)}%)</td></tr>`).join('')}
+    </table>
+    <table><tr><th>Scarto PV (max-min)</th><th>Partite</th></tr>`;
+  for (const [k, c] of Object.entries(bucketScarto(stats.scarto))) html += `<tr><td>${k}</td><td>${c} (${pct(c)})</td></tr>`;
+  html += `</table><p>Scomposizione PV per fonte (media per partita, tutti i giocatori) —
+    L1: ${media(stats.pvLivello[1]).toFixed(1)} · L2: ${media(stats.pvLivello[2]).toFixed(1)}
+    · L3: ${media(stats.pvLivello[3]).toFixed(1)} · ${mercatoOpts.risorseVittoria
+      ? `bonus risorse: ${giocatori.map((id) => `${id} ${media(stats.bonusFinale.bonus[id]).toFixed(1)}`).join(' · ')}`
+      : 'bonus rete/altro: non esiste nell\'engine, punti solo da carte'}</p>`;
+  if (mercatoOpts.risorseVittoria) {
+    const bf = stats.bonusFinale;
+    html += `<h3>Bonus fine partita</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">Regola sperimentale: ogni ${mercatoOpts.risorseVittoria.risorse} risorse rimaste in carico a fine partita (avanzo scartato) → +${mercatoOpts.risorseVittoria.punti} PV.</p>
+    <table><tr><th></th>${giocatori.map((id) => `<th>${id}</th>`).join('')}</tr>
+      <tr><td>Risorse finali</td>${giocatori.map((id) => `<td>${media(bf.droghe[id]).toFixed(1)}</td>`).join('')}</tr>
+      <tr><td>PV bonus</td>${giocatori.map((id) => `<td>${media(bf.bonus[id]).toFixed(1)}</td>`).join('')}</tr>
+    </table>
+    <table><tr><th>PV bonus ottenuti</th><th>Partite-giocatore</th></tr>
+      ${Object.entries(bf.bonusDist).sort((a, b) => a[0] - b[0]).map(([k, c]) =>
+        `<tr><td>${k}</td><td>${(100*c/(giocatori.reduce((s,id)=>s+bf.bonus[id].length,0)||1)).toFixed(0)}%</td></tr>`).join('')}
+    </table>
+    <p>Partite decise dal bonus (n=${tot}) — il bonus è solo uno spareggio elegante o cambia davvero l'esito?</p>
+    <table><tr><th>Esito</th><th>%</th></tr>
+      <tr><td>Nessun cambiamento</td><td>${pct(bf.esito.nessunCambiamento)}</td></tr>
+      <tr><td>Pareggio risolto</td><td>${pct(bf.esito.pareggioRisolto)}</td></tr>
+      <tr><td>Vincitore ribaltato</td><td>${pct(bf.esito.ribaltato)}</td></tr>
+    </table>
+    <p>Bonus per posizione in classifica finale (il bonus premia chi vince già?):</p>
+    <table><tr><th>Posizione</th><th>PV bonus medi</th><th>n</th></tr>
+      ${bf.perClassifica.map((arr, pos) => `<tr><td>${NOME_POS[pos] || `${pos+1}°`}</td><td>+${media(arr).toFixed(1)}</td><td>${arr.length}</td></tr>`).join('')}
+    </table>`;
+  }
+  html += `<p>Inventario finale vs winrate (risorse in carico a fine partita — chi ne accumula tante vince di più o di meno?):</p>
+    <table><tr><th>Risorse finali</th><th>Winrate</th><th>n</th></tr>
+      ${ORDINE_BUCKET_RISORSE.filter((k) => stats.inventarioWinrate[k]).map((k) => { const r = stats.inventarioWinrate[k];
+        return `<tr><td>${k}</td><td>${(100*r.vittorie/r.partite).toFixed(0)}%</td><td>${r.partite}</td></tr>`; }).join('')}
+    </table>
+    <table><tr><th>Consegne per livello (n. carte)</th>${giocatori.map((id) => `<th>${id}</th>`).join('')}</tr>
+      ${[1,2,3].map((liv) => `<tr><td>L${liv}</td>${giocatori.map((id) => `<td>${media(stats.consegneLivelloPerGiocatore[id][liv]).toFixed(1)}</td>`).join('')}</tr>`).join('')}
+    </table>
+    <table><tr><th>Nodo</th><th>Costruzioni</th></tr>`;
+  for (const [k, c] of top(stats.nodi, 5)) html += `<tr><td>${k}</td><td>${c}</td></tr>`;
+  html += `</table>`;
+  const nodoApTot = (stats.nodoApertura.libero + stats.nodoApertura.condiviso + stats.nodoApertura.conteso) || 1;
+  html += `<p>Apertura nuovi accampamenti (n=${nodoApTot}) — il nodo al momento del seed era:</p>
+    <table><tr><th>Libero (nessuno)</th><th>Condiviso (già lui)</th><th>Conteso (già un avversario)</th></tr>
+      <tr><td>${(100*stats.nodoApertura.libero/nodoApTot).toFixed(0)}%</td>
+        <td>${(100*stats.nodoApertura.condiviso/nodoApTot).toFixed(0)}%</td>
+        <td>${(100*stats.nodoApertura.conteso/nodoApTot).toFixed(0)}%</td></tr>
+    </table>
+    <p>Giocatori presenti per nodo (quanti giocatori distinti hanno un seed lì, per partita):</p>
+    <table><tr><th>Nodo</th><th>Media giocatori</th><th>Distribuzione</th></tr>`;
+  for (const [k, r] of [...stats.nodoPresenza.entries()].sort((a, b) => (b[1].sommaGiocatori/b[1].partite) - (a[1].sommaGiocatori/a[1].partite))) {
+    const distr = Object.entries(r.distribuzione).sort((a, b) => a[0] - b[0])
+      .map(([g, c]) => `${g}:${(100*c/r.partite).toFixed(0)}%`).join(' ');
+    html += `<tr><td>${k}</td><td>${(r.sommaGiocatori/r.partite).toFixed(1)} (n=${r.partite})</td><td>${distr}</td></tr>`;
+  }
+  html += `</table>
+    <p>Fine partita — motivo (regola accampamentiMax):</p>
+    <table><tr><th>Esaurimento commesse (mercato)</th><th>Esaurimento accampamenti</th></tr>
+    <tr><td>${stats.fineMotivo.mercato} (${(100*stats.fineMotivo.mercato/tot).toFixed(0)}%)</td><td>${stats.fineMotivo.accampamenti} (${(100*stats.fineMotivo.accampamenti/tot).toFixed(0)}%)</td></tr></table>
+    <p>Accampamenti aperti totali (per giocatore, su tutto il batch):</p>
+    <table><tr>${giocatori.map((id) => `<th>${id}</th>`).join('')}</tr><tr>`;
+  const accTotHtml = accampamentiPerGiocatore(stats, giocatori);
+  html += giocatori.map((id) => `<td>${accTotHtml[id]} (${(accTotHtml[id]/tot).toFixed(2)}/partita)</td>`).join('');
+  html += `</tr></table>
+    <p>Valore di un accampamento per ordine di apertura (1° del giocatore, 2°, ... — 6+ accorpati).
+    PV e consegne non sono attribuibili: le risorse sono un pool fungibile per giocatore, non tracciate per accampamento.</p>
+    <table><tr><th>Ordine</th><th>n</th><th>Turno apertura</th><th>Rete finale</th><th>Costruzioni</th><th>Raccolte</th><th>Risorse</th></tr>`;
+  for (const r of accampamentiPerOrdine(stats))
+    html += `<tr><td>${r.ordine}</td><td>${r.n}</td><td>${r.turno.toFixed(1)}</td><td>${r.rete.toFixed(2)}</td>`
+      + `<td>${r.costruzioni.toFixed(2)}</td><td>${r.raccolte.toFixed(2)}</td><td>${r.risorse.toFixed(2)}</td></tr>`;
+  html += `</table>
+    <p>Curva di maturazione della rete (rete media a N turni dall'apertura — solo accampamenti che hanno "vissuto" fin lì):</p>
+    <table><tr><th>Età (turni dall'apertura)</th><th>Rete media</th><th>n</th></tr>
+      ${accumulaMaturazione(stats.accampamentiDettaglio).map((r) => `<tr><td>+${r.eta}</td><td>${r.rete.toFixed(2)}</td><td>${r.n}</td></tr>`).join('')}
+    </table>
+    <p>Tempo morto degli accampamenti per ordine (vita utile = apertura→ultima attività, coda morta = ultima attività→fine partita):</p>
+    <table><tr><th>Ordine</th><th>n</th><th>Vita utile</th><th>Coda morta</th><th>% ancora attivi a fine partita</th></tr>
+      ${tempoMortoPerOrdine(stats).map((r) => `<tr><td>${r.ordine}</td><td>${r.n}</td><td>${r.vitaUtile.toFixed(1)}</td><td>${r.codaMorta.toFixed(1)}</td><td>${r.pctAttivi.toFixed(0)}%</td></tr>`).join('')}
+    </table>
+    <p>Risorse sprecate (media/partita per giocatore — rimaste = inventario a fine partita):</p>
+    <table><tr><th>Giocatore</th><th>Raccolte</th><th>Spese</th><th>Rimaste</th><th>% sprecato</th></tr>
+      ${risorseSprecateReport(stats, giocatori).map((r) => `<tr><td>${r.id}</td><td>${r.raccolte.toFixed(1)}</td><td>${r.spese.toFixed(1)}</td><td>${r.rimaste.toFixed(1)}</td><td>${r.pctSprecato.toFixed(0)}%</td></tr>`).join('')}
+    </table>`;
+  { const mi = stats.motivoInutilizzo, miTot = Object.values(mi).reduce((s, x) => s + x, 0) || 1;
+    html += `<h3>Motivo inutilizzo</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">Perché una risorsa rimane in mano a fine partita — classificata contro l'ultimo mercato "vivo" visto in partita (n=${miTot} unità).</p>
+    <table><tr><th>Motivo</th><th>Unità</th><th>%</th></tr>
+      <tr><td>Commessa disponibile (errore IA)</td><td>${mi.commessaDisponibile}</td><td>${(100*mi.commessaDisponibile/miTot).toFixed(0)}%</td></tr>
+      <tr><td>Mancavano altre risorse</td><td>${mi.mancavanoAltreRisorse}</td><td>${(100*mi.mancavanoAltreRisorse/miTot).toFixed(0)}%</td></tr>
+      <tr><td>Nessuna commessa la richiedeva</td><td>${mi.nessunaCommessa}</td><td>${(100*mi.nessunaCommessa/miTot).toFixed(0)}%</td></tr>
+      <tr><td>Partita terminata (mai pescata)</td><td>${mi.partitaTerminata}</td><td>${(100*mi.partitaTerminata/miTot).toFixed(0)}%</td></tr>
+    </table>`;
+  }
+  { const rm = stats.risorseMancantiPerCommessa, rmTot = rm.length || 1, rmBucket = bucketMancanti(rm);
+    html += `<h3>Risorse mancanti per commessa non completata</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">Per ogni commessa del mercato recente NON completabile con le risorse finali di un giocatore — quante unità mancano in totale? "1" = vicinissimo, "4+" = lontano (n=${rm.length}).</p>
+    <table><tr><th>Risorse mancanti</th><th>%</th></tr>
+      ${Object.entries(rmBucket).map(([k, c]) => `<tr><td>${k}</td><td>${(100*c/rmTot).toFixed(0)}%</td></tr>`).join('')}
+    </table>
+    <p style="color:var(--muted);font-size:12px;margin:12px 0 8px">Quale risorsa manca — % di commesse non completate in cui compare come mancante (una commessa può contarne più di una).</p>
+    <table><tr><th>Risorsa</th><th>%</th></tr>
+      ${Object.entries(stats.risorseMancantiPerTipo).sort((a, b) => b[1] - a[1]).map(([r, c]) =>
+        `<tr><td>${RIS_EMOJI[r] || ''} ${r}</td><td>${(100*c/rmTot).toFixed(0)}%</td></tr>`).join('')}
+    </table>`;
+  }
+  html += `<h3>Flusso risorse per tipo</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">Ogni colonna in % di se stessa — richiesta dal mazzo vs raccolta/consegnata/rimasta nel batch. Confronta la FORMA della domanda con quella dell'offerta, non i valori assoluti (scale diverse: mazzo fisso vs batch di N partite).</p>
+    <table><tr><th>Risorsa</th><th>Richiesta</th><th>Raccolta</th><th>Consegnata</th><th>Rimasta</th></tr>
+      ${flussoRisorseReport(stats, mercatoOpts.mazzo || []).map((r) =>
+        `<tr><td>${RIS_EMOJI[r.r] || ''} ${r.r}</td><td>${r.richiesta.toFixed(0)}%</td><td>${r.raccolta.toFixed(0)}%</td><td>${r.consegnata.toFixed(0)}%</td><td>${r.rimasta.toFixed(0)}%</td></tr>`).join('')}
+    </table>`;
+  html += `<h3>Resa per costruzione nel bioma</h3>
+    <p style="color:var(--muted);font-size:12px;margin:0 0 8px">Risorse ottenute in media ogni volta che si costruisce in quella zona — non contesa del nodo, rendimento reale della singola azione.</p>
+    <table><tr><th>Risorsa</th><th>Risorse/costruzione</th><th>n</th></tr>
+      ${Object.entries(stats.produzionePerBioma).map(([r, d]) =>
+        `<tr><td>${RIS_EMOJI[r] || ''} ${r}</td><td>${(d.risorse / (d.costruzioni || 1)).toFixed(2)}</td><td>${d.costruzioni}</td></tr>`).join('')}
+    </table>`;
+  html += `<p>Qualità delle carte (esposizioni = volte apparse nel mercato, tasso = % consegnate sulle esposizioni):</p>
+    <table><tr><th>Carta</th><th>L</th><th>Esposizioni</th><th>Consegne</th><th>Tasso</th><th>Turno esposizione</th><th>Turno consegna</th></tr>
+      ${qualitaCarte(stats, mercatoOpts.mazzo || []).map((c) =>
+        `<tr><td>${c.id}</td><td>${c.livello}</td><td>${c.esposizioni}</td><td>${c.consegne}</td><td>${c.tasso.toFixed(0)}%</td><td>${c.turnoEsposizione.toFixed(1)}</td><td>${c.turnoConsegna != null ? c.turnoConsegna.toFixed(1) : '—'}</td></tr>`).join('')}
+    </table>
+    <p>Utilizzo pozioni (sperimentale — commesse completate diventano poteri monouso invece di essere scartate):</p>
+    <table><tr><th>Pozione</th><th>Ottenute</th><th>Usate</th><th>% uso</th><th>Turno ottenimento</th><th>Turno uso</th><th>Permanenza</th><th>Inutilizzate</th></tr>
+      ${pozioniReport(stats).map((p) => `<tr><td>${p.tipo}</td><td>${p.ottenute}</td><td>${p.usate}</td><td>${p.pctUso.toFixed(0)}%</td>`
+        + `<td>${p.turnoOttenimento.toFixed(1)}</td><td>${p.turnoUtilizzo != null ? p.turnoUtilizzo.toFixed(1) : '—'}</td>`
+        + `<td>${p.permanenza != null ? p.permanenza.toFixed(1) : '—'}</td><td>${p.inutilizzate}</td></tr>`).join('')}
+    </table>
+    <p>Valore alla vittoria (fra chi ha OTTENUTO la pozione: usata almeno 1 volta vs mai usata):</p>
+    <table><tr><th>Pozione</th><th>Winrate uso</th><th>Winrate non-uso</th><th>PV con uso</th><th>PV senza uso</th></tr>
+      ${pozioniReport(stats).map((p) => `<tr><td>${p.tipo}</td>`
+        + `<td>${p.winrateConUso != null ? p.winrateConUso.toFixed(0)+'% (n='+p.nConUso+')' : '—'}</td>`
+        + `<td>${p.winrateSenzaUso != null ? p.winrateSenzaUso.toFixed(0)+'% (n='+p.nSenzaUso+')' : '—'}</td>`
+        + `<td>${p.pvConUso != null ? p.pvConUso.toFixed(1) : '—'}</td><td>${p.pvSenzaUso != null ? p.pvSenzaUso.toFixed(1) : '—'}</td></tr>`).join('')}
+    </table>
+    <p>Swing della pozione (PV/posizione 1 turno prima → 10 turni dopo l'uso, censurato se la partita finisce prima):</p>
+    <table><tr><th>Pozione</th><th>Δ PV</th><th>Δ posizione</th><th>n</th></tr>
+      ${pozioniSwingReport(stats).map((p) => `<tr><td>${p.tipo}</td>`
+        + `<td>${p.deltaPV != null ? (p.deltaPV>=0?'+':'')+p.deltaPV.toFixed(1) : '—'}</td>`
+        + `<td>${p.deltaRank != null ? (p.deltaRank>=0?'+':'')+p.deltaRank.toFixed(1) : '—'}</td><td>${p.n}</td></tr>`).join('')}
+    </table>
+    <p>Valore della pozione per livello (ruolo nella progressione della partita: L1 immediate? L2 tattiche? L3 esplosive?):</p>
+    <table><tr><th>Livello</th><th>Pozione</th><th>% uso</th><th>Permanenza</th><th>Δ PV swing</th><th>Winrate uso</th></tr>
+      ${pozioniPerLivelloReport(stats).map((p) => `<tr><td>${p.livello}</td><td>${p.tipo}</td>`
+        + `<td>${p.pctUso != null ? p.pctUso.toFixed(0)+'%' : '—'}</td>`
+        + `<td>${p.permanenza != null ? p.permanenza.toFixed(1) : '—'}</td>`
+        + `<td>${p.deltaPV != null ? (p.deltaPV>=0?'+':'')+p.deltaPV.toFixed(1)+' (n='+p.nSwing+')' : '—'}</td>`
+        + `<td>${p.winrateConUso != null ? p.winrateConUso.toFixed(0)+'% (n='+p.nConUso+')' : '—'}</td></tr>`).join('')}
+    </table>
+    <p>Ritmo — costruzioni (rete) per nuovo accampamento (seed), per giocatore:</p>
+    <table><tr>${giocatori.map((id) => `<th>${id}</th>`).join('')}</tr><tr>`;
+  html += giocatori.map((id) => {
+    const costrTot = stats.costruzioniPerGiocatore[id].reduce((s, x) => s + x, 0);
+    return `<td>${costrTot} / ${accTotHtml[id]} = ${(costrTot/(accTotHtml[id]||1)).toFixed(1)}</td>`;
+  }).join('');
+  html += `</tr></table>`;
+  html += '<p>Meccanica ricarica (usi medi per partita, risorse investite in ricarica, cariche residue a fine partita, turno medio di acquisizione):</p>'
+    + '<table><tr><th>Pozione</th><th>Usi/partita</th><th>Ris. ricarica</th><th>Cariche residue</th><th>Turno acquis.</th></tr>'
+    + pozioniReport(stats).map((p) => '<tr><td>' + p.tipo + '</td>'
+      + '<td>' + (p.usiMedi != null ? p.usiMedi.toFixed(2) : '—') + '</td>'
+      + '<td>' + (p.risorseRicaricaMedi != null ? p.risorseRicaricaMedi.toFixed(2) : '—') + '</td>'
+      + '<td>' + (p.caricheResidueMedie != null ? p.caricheResidueMedie.toFixed(2) : '—') + '</td>'
+      + '<td>' + (p.turnoOttenimento != null ? p.turnoOttenimento.toFixed(1) : '—') + '</td></tr>').join('')
+    + '</table>';
+  html += `
+    <p>Saturazione nodo (totale accampamenti aperti per giocatore, su tutto il batch):</p>
+    <table><tr><th>Nodo</th>${giocatori.map((id) => `<th>${id}</th>`).join('')}</tr>`;
+  for (const [k, sat] of [...stats.nodoSaturazione.entries()].sort((a, b) =>
+    Object.values(b[1]).reduce((s, x) => s + x, 0) - Object.values(a[1]).reduce((s, x) => s + x, 0))) {
+    html += `<tr><td>${k}</td>${giocatori.map((id) => `<td>${sat[id] || 0}</td>`).join('')}</tr>`;
+  }
+  html += `</table>
+    <p>Turno medio di apertura per tipo (isola l'effetto tempo dal tipo di nodo):</p>
+    <table><tr><th>Libero</th><th>Condiviso</th><th>Conteso</th></tr><tr>`;
+  for (const cat of ['libero', 'condiviso', 'conteso'])
+    html += `<td>turno ${media(stats.aperturaTurno[cat]).toFixed(1)} (n=${stats.aperturaTurno[cat].length})</td>`;
+  html += `</tr></table>`;
+  const hm = heatmap(stats), mai = hm.filter((h) => h.c === 0);
+  html += `<p>Heatmap hex costruibili: ${hm.length} totali · ${mai.length} mai costruiti in ${stats.turni.length} partite</p>
+    <div style="max-height:320px;overflow:auto"><table><tr><th>Hex</th><th>Costruzioni</th><th>Turno medio</th></tr>`;
+  for (const h of hm) html += `<tr><td>${h.k}</td><td>${h.c}</td><td>${h.turnoMedio ? h.turnoMedio.toFixed(1) : '—'}</td></tr>`;
+  html += `</table></div>`;
+  return html;
+}
+
+
+el('run').addEventListener('click', async () => {
+  const n = Math.max(1, Math.min(5000, +el('nGames').value || 1));
+  const seedStart = +el('seedStart').value || 1;
+  const nG = Math.max(2, Math.min(4, +el('nGiocatori').value || 2));
+  const giocatori = ['P1', 'P2', 'P3', 'P4'].slice(0, nG);
+  const pkByPid = Object.fromEntries(giocatori.map((id) => [id, el('pers' + id).value]));
+  const persByPid = Object.fromEntries(giocatori.map((id) => [id, PERSONALITA[pkByPid[id]]]));
+  const depth = +el('rolloutDepth').value || 3, rollouts = +el('rolloutN').value || 8;
+  const aiByPid = Object.fromEntries(giocatori.map((id) => [id, { modo: el('ai' + id).value, depth, rollouts }]));
+  board = boardAttuale();
+  const mercatoOpts = letturaSetup(nG);
+  el('run').disabled = true;
+  el('status').textContent = `Simulo ${n} partite...`;
+  el('result').style.display = 'none';
+  el('copy').style.display = 'none';
+  el('progressWrap').style.display = '';
+  el('progressBar').style.width = '0%';
+  el('progressText').textContent = '';
+  await new Promise((r) => setTimeout(r, 20)); // lascia respirare la UI prima del loop
+  const t0 = performance.now();
+  const onProgress = (done, tot) => {
+    const pct = tot ? 100 * done / tot : 0;
+    el('progressBar').style.width = pct.toFixed(1) + '%';
+    const elapsedS = (performance.now() - t0) / 1000;
+    if (done > 0 && done < tot) {
+      const restanti = (elapsedS / done) * (tot - done);
+      const fine = new Date(Date.now() + restanti * 1000);
+      el('progressText').textContent = `${done}/${tot} partite (${pct.toFixed(0)}%) · `
+        + `tempo rimasto ~${fmtDurata(restanti)} · fine stimata ${fine.toLocaleTimeString()}`;
+    } else {
+      el('progressText').textContent = `${done}/${tot} partite (${pct.toFixed(0)}%)`;
+    }
+  };
+  const stats = await runBatch(n, seedStart, giocatori, persByPid, aiByPid, mercatoOpts, onProgress);
+  const ms = (performance.now() - t0).toFixed(0);
+  el('progressWrap').style.display = 'none';
+  el('status').textContent = `Fatto: ${stats.turni.length}/${n} partite valide in ${ms}ms.`;
+  el('result').innerHTML = renderHTML(stats, n, seedStart, giocatori, pkByPid, aiByPid, mercatoOpts);
+  el('result').style.display = 'block';
+  el('copy').style.display = 'inline-block';
+  el('download').style.display = 'inline-block';
+  el('copy').onclick = async () => {
+    await copiaTesto(reportTesto(stats, n, seedStart, giocatori, pkByPid, aiByPid, mercatoOpts), el('copy'), '📋 Copia report');
+  };
+  el('download').onclick = () => salva(`batch-swamp-${n}p-seed${seedStart}-${Date.now()}.txt`,
+    new Blob([reportTesto(stats, n, seedStart, giocatori, pkByPid, aiByPid, mercatoOpts)], { type: 'text/plain' }), 'text/plain', '.txt');
+  el('run').disabled = false;
+  salvaRunPerDiff(n, seedStart, giocatori, mercatoOpts, stats);
+});
+
+el('diffRun').addEventListener('click', () => {
+  const rA = batchHistory.find((r) => String(r.id) === el('diffA').value);
+  const rB = batchHistory.find((r) => String(r.id) === el('diffB').value);
+  if (!rA || !rB) { el('diffResult').innerHTML = '<p style="color:var(--muted)">Servono due run salvate — lancia "Simula" almeno due volte.</p>'; return; }
+  const testo = diffReport(rA, rB).join('\n');
+  el('diffResult').innerHTML = `<pre>${testo}</pre>`;
+  el('diffCopy').style.display = 'inline-block';
+  el('diffCopy').onclick = () => copiaTesto(testo, el('diffCopy'), '📋 Copia');
+});
+
+// E-007: scarto Primo-Secondo (PV/costruzioni/risorse/commesse) ogni `step` turni, mediato sulle
+// partite che arrivano a quel turno (il campione si assottiglia verso il fondo partita: mostrato
+// con `n`, così una media su 3 partite non viene letta come robusta quanto una su 300).
+function runTimeline(n, seedStart, persP1, persP2, mercatoOpts, step = 5) {
+  board = board2p; // esperimento 2p-only
+  const { primoGiocatoreSetting, ...restOpts } = mercatoOpts;
+  const buckets = new Map();
+  for (let i = 0; i < n; i++) {
+    const seed = seedStart + i;
+    const primoGiocatore = primoGiocatoreSetting === 'alterna' ? (i % 2 === 0 ? 'P1' : 'P2') : (primoGiocatoreSetting || 'P1');
+    partita(board, CARTA, {
+      seed, cfg, maxTurni: 2000, persP1, persP2, ...restOpts, primoGiocatore,
+      onTurno: (state, turni) => {
+        if (turni % step !== 0) return;
+        const [primo, secondo] = state.giocatori; // ordine = chi muove per primo (vedi bot.js)
+        const b = buckets.get(turni) || { pv: [], costruzioni: [], risorse: [], commesse: [] };
+        b.pv.push(primo.punti - secondo.punti);
+        b.costruzioni.push(primo.azioni.costruisci - secondo.azioni.costruisci);
+        b.risorse.push(primo.droghe.length - secondo.droghe.length);
+        b.commesse.push(primo.carte.length - secondo.carte.length);
+        buckets.set(turni, b);
+      },
+    });
+  }
+  return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([turno, b]) => ({
+    turno, n: b.pv.length,
+    pv: media(b.pv), costruzioni: media(b.costruzioni), risorse: media(b.risorse), commesse: media(b.commesse),
+  }));
+}
+
+function timelineTesto(righe, n, seedStart, mercatoOpts) {
+  const L = [`PSYCADELIC SWAMP FEST — E-007 Timeline del vantaggio (${n} partite, seed ${seedStart}..${seedStart + n - 1})`, ''];
+  L.push(...configBlock(mercatoOpts, ['P1', 'P2'], { P1: '—', P2: '—' }, {}).filter((l) => !l.startsWith('Personalità')), '');
+  L.push('Scarto Primo−Secondo (positivo = il primo giocatore è avanti)', '');
+  L.push('Turno  n   PV     Costruz.  Risorse  Commesse');
+  for (const r of righe) L.push(
+    `${String(r.turno).padStart(5)}  ${String(r.n).padStart(3)}  ${r.pv.toFixed(1).padStart(5)}  `
+    + `${r.costruzioni.toFixed(1).padStart(8)}  ${r.risorse.toFixed(1).padStart(7)}  ${r.commesse.toFixed(1).padStart(8)}`);
+  return L.join('\n');
+}
+
+function timelineHTML(righe, mercatoOpts) {
+  const maxAbs = Math.max(1, ...righe.map((r) => Math.abs(r.pv)));
+  const bar = (v) => {
+    const w = Math.round(30 * Math.abs(v) / maxAbs);
+    return v >= 0
+      ? `<span style="color:var(--p1)">${'█'.repeat(w)}</span> +${v.toFixed(1)}`
+      : `<span style="color:var(--p2)">${'█'.repeat(w)}</span> ${v.toFixed(1)}`;
+  };
+  const SOGLIA_CAMPIONE = 30;
+  let html = `<pre>${configBlock(mercatoOpts, ['P1', 'P2'], { P1: '—', P2: '—' }, {}).filter((l) => !l.startsWith('Personalità')).join('\n')}</pre>
+    <p>Scarto PV Primo−Secondo per turno (positivo = il primo giocatore è avanti) —
+      righe sotto <span style="opacity:.5">grigie</span> quando n &lt; ${SOGLIA_CAMPIONE}: da lì in poi la varianza è alta, non interpolare</p>
+    <table><tr><th>Turno</th><th>n</th><th>Scarto PV</th><th>Costruz.</th><th>Risorse</th><th>Commesse</th></tr>`;
+  for (const r of righe) {
+    const grigio = r.n < SOGLIA_CAMPIONE ? ' style="opacity:.5"' : '';
+    html += `<tr${grigio}><td>${r.turno}</td><td>${r.n}</td><td>${bar(r.pv)}</td>`
+      + `<td>${r.costruzioni.toFixed(1)}</td><td>${r.risorse.toFixed(1)}</td><td>${r.commesse.toFixed(1)}</td></tr>`;
+  }
+  return html + '</table>';
+}
+
+el('runTimeline').addEventListener('click', async () => {
+  const n = Math.max(1, Math.min(5000, +el('nGames').value || 1));
+  const seedStart = +el('seedStart').value || 1;
+  const pkP1 = el('persP1').value, pkP2 = el('persP2').value;
+  const mercatoOpts = letturaSetup();
+  el('runTimeline').disabled = true;
+  el('statusTimeline').textContent = `Simulo ${n} partite...`;
+  el('resultTimeline').innerHTML = ''; el('copyTimeline').style.display = 'none'; el('downloadTimeline').style.display = 'none';
+  await new Promise((r) => setTimeout(r, 20));
+  const t0 = performance.now();
+  const righe = runTimeline(n, seedStart, PERSONALITA[pkP1], PERSONALITA[pkP2], mercatoOpts);
+  const ms = (performance.now() - t0).toFixed(0);
+  el('statusTimeline').textContent = `Fatto: ${n} partite, ${righe.length} checkpoint in ${ms}ms.`
+    + (mercatoOpts.primoGiocatoreSetting !== 'alterna' ? ' — ATTENZIONE: "Primo giocatore" non è su Alterna, lo scarto qui sotto è anche scarto di label.' : '');
+  el('resultTimeline').innerHTML = timelineHTML(righe, mercatoOpts);
+  el('copyTimeline').style.display = 'inline-block'; el('downloadTimeline').style.display = 'inline-block';
+  el('copyTimeline').onclick = async () => {
+    await copiaTesto(timelineTesto(righe, n, seedStart, mercatoOpts), el('copyTimeline'), '📋 Copia');
+  };
+  el('downloadTimeline').onclick = () => salva(`timeline-swamp-${n}p-seed${seedStart}-${Date.now()}.txt`,
+    new Blob([timelineTesto(righe, n, seedStart, mercatoOpts)], { type: 'text/plain' }), 'text/plain', '.txt');
+  el('runTimeline').disabled = false;
+});
+
+// E-008: per ogni partita, ultimo turno in cui il vincitore finale era sotto o pari → il turno
+// successivo è il "punto di non ritorno". Registra ogni turno (step=1: qui serve precisione, non
+// un campione a intervalli come in E-007). Le partite in pareggio sono escluse: "vincitore futuro"
+// non è definito.
+function runPuntoNonRitorno(n, seedStart, persP1, persP2, mercatoOpts) {
+  board = board2p; // esperimento 2p-only
+  const { primoGiocatoreSetting, ...restOpts } = mercatoOpts;
+  const turni = [];
+  for (let i = 0; i < n; i++) {
+    const seed = seedStart + i;
+    const primoGiocatore = primoGiocatoreSetting === 'alterna' ? (i % 2 === 0 ? 'P1' : 'P2') : (primoGiocatoreSetting || 'P1');
+    const storia = [];
+    const { state, finita } = partita(board, CARTA, {
+      seed, cfg, maxTurni: 2000, persP1, persP2, ...restOpts, primoGiocatore,
+      onTurno: (s, t) => { const [p, s2] = s.giocatori; storia.push({ turno: t, a: p.punti, b: s2.punti }); },
+    });
+    if (!finita || !storia.length) continue;
+    const [p, s2] = state.giocatori;
+    if (p.punti === s2.punti) continue; // pareggio: nessun "vincitore futuro" da inseguire
+    const vinceA = p.punti > s2.punti;
+    let ultimoSottoOPari = -1;
+    for (let k = 0; k < storia.length; k++) {
+      const gap = vinceA ? storia[k].a - storia[k].b : storia[k].b - storia[k].a;
+      if (gap <= 0) ultimoSottoOPari = k;
+    }
+    turni.push(ultimoSottoOPari === -1 ? storia[0].turno : (storia[ultimoSottoOPari + 1]?.turno ?? storia[storia.length - 1].turno));
+  }
+  return turni;
+}
+
+function istogrammaTurni(turni, ampiezza = 10) {
+  const b = new Map();
+  for (const t of turni) { const k = Math.floor(t / ampiezza) * ampiezza; b.set(k, (b.get(k) || 0) + 1); }
+  return [...b.entries()].sort((a, c) => a[0] - c[0]).map(([inizio, c]) => ({ inizio, fine: inizio + ampiezza - 1, c }));
+}
+const mediana = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : 0; };
+
+function nonRitornoTesto(turni, hist, n, seedStart, mercatoOpts) {
+  const L = [`PSYCADELIC SWAMP FEST — E-008 Punto di non ritorno (${turni.length}/${n} partite valide, seed ${seedStart}..${seedStart + n - 1})`, ''];
+  L.push(...configBlock(mercatoOpts, ['P1', 'P2'], { P1: '—', P2: '—' }, {}).filter((l) => !l.startsWith('Personalità')), '');
+  L.push(`Mediana: turno ${mediana(turni).toFixed(0)} · Media: ${media(turni).toFixed(1)} · Min: ${Math.min(...turni)} · Max: ${Math.max(...turni)}`, '');
+  L.push('Istogramma:');
+  const tot = turni.length || 1;
+  for (const h of hist) L.push(`  ${String(h.inizio).padStart(3)}-${String(h.fine).padStart(3)}: ${'█'.repeat(Math.round(40 * h.c / tot))} ${h.c} (${(100*h.c/tot).toFixed(0)}%)`);
+  return L.join('\n');
+}
+function nonRitornoHTML(turni, hist, mercatoOpts) {
+  const tot = turni.length || 1;
+  let html = `<pre>${configBlock(mercatoOpts, ['P1', 'P2'], { P1: '—', P2: '—' }, {}).filter((l) => !l.startsWith('Personalità')).join('\n')}</pre>
+    <p>Mediana: turno <b>${mediana(turni).toFixed(0)}</b> · Media: ${media(turni).toFixed(1)} · Min: ${Math.min(...turni)} · Max: ${Math.max(...turni)} · Partite valide: ${turni.length}</p>
+    <table><tr><th>Turni</th><th>Partite</th><th></th></tr>`;
+  for (const h of hist) html += `<tr><td>${h.inizio}-${h.fine}</td><td>${h.c} (${(100*h.c/tot).toFixed(0)}%)</td>`
+    + `<td><span style="color:var(--p1)">${'█'.repeat(Math.round(40 * h.c / tot))}</span></td></tr>`;
+  return html + '</table>';
+}
+
+el('runNonRitorno').addEventListener('click', async () => {
+  const n = Math.max(1, Math.min(5000, +el('nGames').value || 1));
+  const seedStart = +el('seedStart').value || 1;
+  const pkP1 = el('persP1').value, pkP2 = el('persP2').value;
+  const mercatoOpts = letturaSetup();
+  el('runNonRitorno').disabled = true;
+  el('statusNonRitorno').textContent = `Simulo ${n} partite...`;
+  el('resultNonRitorno').innerHTML = ''; el('copyNonRitorno').style.display = 'none'; el('downloadNonRitorno').style.display = 'none';
+  await new Promise((r) => setTimeout(r, 20));
+  const t0 = performance.now();
+  const turni = runPuntoNonRitorno(n, seedStart, PERSONALITA[pkP1], PERSONALITA[pkP2], mercatoOpts);
+  const hist = istogrammaTurni(turni);
+  const ms = (performance.now() - t0).toFixed(0);
+  el('statusNonRitorno').textContent = `Fatto: ${turni.length}/${n} partite valide (pareggi esclusi) in ${ms}ms.`
+    + (mercatoOpts.primoGiocatoreSetting !== 'alterna' ? ' — nota: "Primo giocatore" non è su Alterna.' : '');
+  el('resultNonRitorno').innerHTML = nonRitornoHTML(turni, hist, mercatoOpts);
+  el('copyNonRitorno').style.display = 'inline-block'; el('downloadNonRitorno').style.display = 'inline-block';
+  el('copyNonRitorno').onclick = async () => {
+    await copiaTesto(nonRitornoTesto(turni, hist, n, seedStart, mercatoOpts), el('copyNonRitorno'), '📋 Copia');
+  };
+  el('downloadNonRitorno').onclick = () => salva(`non-ritorno-swamp-${n}p-seed${seedStart}-${Date.now()}.txt`,
+    new Blob([nonRitornoTesto(turni, hist, n, seedStart, mercatoOpts)], { type: 'text/plain' }), 'text/plain', '.txt');
+  el('runNonRitorno').disabled = false;
+});
+
+// E-009: per ogni contributo, turni fino alla PROSSIMA consegna dello stesso giocatore in quella
+// partita, confrontati con la sua media personale di turni-tra-consegne nella stessa partita
+// (baseline "sana"). Correlazionale: nessun replay controfattuale (stessa partita senza quel
+// contributo) — vedi avviso in UI.
+function runCostoOpportunita(n, seedStart, persP1, persP2, mercatoOpts) {
+  board = board2p; // esperimento 2p-only
+  const { primoGiocatoreSetting, ...restOpts } = mercatoOpts;
+  const gaps = [], baseline = [];
+  let eventiTotali = 0, eventiSenzaFutura = 0;
+  for (let i = 0; i < n; i++) {
+    const seed = seedStart + i;
+    const primoGiocatore = primoGiocatoreSetting === 'alterna' ? (i % 2 === 0 ? 'P1' : 'P2') : (primoGiocatoreSetting || 'P1');
+    const { state, finita } = partita(board, CARTA, { seed, cfg, maxTurni: 2000, persP1, persP2, ...restOpts, primoGiocatore });
+    if (!finita) continue;
+    for (const pid of ['P1', 'P2']) {
+      const consegne = state.log.filter((e) => e.tipo === 'consegna' && e.player === pid).map((e) => e.n);
+      const gapsBase = [];
+      for (let k = 1; k < consegne.length; k++) gapsBase.push(consegne[k] - consegne[k - 1]);
+      if (gapsBase.length) baseline.push(media(gapsBase));
+      for (const ev of state.festivalStats.eventi.filter((e) => e.player === pid)) {
+        eventiTotali++;
+        const prossima = consegne.find((t) => t > ev.turno);
+        if (prossima != null) gaps.push(prossima - ev.turno); else eventiSenzaFutura++;
+      }
+    }
+  }
+  return { gaps, baseline, eventiTotali, eventiSenzaFutura };
+}
+
+function costoTesto(r, n, seedStart, mercatoOpts) {
+  const L = [`PSYCADELIC SWAMP FEST — E-009 Costo opportunità del contributo (${n} partite, seed ${seedStart}..${seedStart + n - 1})`, ''];
+  L.push(...configBlock(mercatoOpts, ['P1', 'P2'], { P1: '—', P2: '—' }, {}).filter((l) => !l.startsWith('Personalità')), '');
+  L.push('ATTENZIONE: correlazionale, non causale — nessun replay controfattuale.', '');
+  L.push(`Eventi (contributi): ${r.eventiTotali} · senza consegna successiva nella partita: ${r.eventiSenzaFutura} (esclusi dal confronto)`);
+  L.push(`Turni fino alla prossima consegna DOPO un contributo: media ${media(r.gaps).toFixed(1)} (n=${r.gaps.length})`);
+  L.push(`Baseline — media personale turni-tra-consegne, stessa partita: media ${media(r.baseline).toFixed(1)} (n=${r.baseline.length})`);
+  const diff = media(r.gaps) - media(r.baseline);
+  L.push('', diff > 1
+    ? `→ Dopo un contributo si aspetta ${diff.toFixed(1)} turni IN PIÙ del solito prima della prossima consegna: indizio di costo opportunità (ma vedi avviso sopra).`
+    : diff < -1
+      ? `→ Dopo un contributo si aspetta ${(-diff).toFixed(1)} turni IN MENO del solito: nessun costo visibile, anzi.`
+      : `→ Nessuna differenza rilevante (${diff.toFixed(1)} turni): non emerge un costo opportunità osservabile.`);
+  return L.join('\n');
+}
+function costoHTML(r, mercatoOpts) {
+  const diff = media(r.gaps) - media(r.baseline);
+  const verdetto = diff > 1
+    ? `Dopo un contributo si aspetta <b>${diff.toFixed(1)} turni in più</b> del solito — indizio di costo opportunità (ma è correlazione, vedi sopra).`
+    : diff < -1
+      ? `Dopo un contributo si aspetta <b>${(-diff).toFixed(1)} turni in meno</b> del solito: nessun costo visibile.`
+      : `Nessuna differenza rilevante (<b>${diff.toFixed(1)} turni</b>): non emerge un costo opportunità osservabile.`;
+  return `<pre>${configBlock(mercatoOpts, ['P1', 'P2'], { P1: '—', P2: '—' }, {}).filter((l) => !l.startsWith('Personalità')).join('\n')}</pre>
+    <p>Eventi (contributi): ${r.eventiTotali} · senza consegna successiva: ${r.eventiSenzaFutura} (esclusi)</p>
+    <table><tr><th></th><th>Media turni</th><th>n</th></tr>
+      <tr><td>Dopo un contributo → prossima consegna</td><td>${media(r.gaps).toFixed(1)}</td><td>${r.gaps.length}</td></tr>
+      <tr><td>Baseline (media personale, stessa partita)</td><td>${media(r.baseline).toFixed(1)}</td><td>${r.baseline.length}</td></tr></table>
+    <p>${verdetto}</p>`;
+}
+
+el('runCosto').addEventListener('click', async () => {
+  const n = 200; // richiesto esplicitamente: 200 partite per questo esperimento
+  const seedStart = +el('seedStart').value || 1;
+  const pkP1 = el('persP1').value, pkP2 = el('persP2').value;
+  const mercatoOpts = letturaSetup();
+  el('runCosto').disabled = true;
+  el('statusCosto').textContent = `Simulo ${n} partite...`;
+  el('resultCosto').innerHTML = ''; el('copyCosto').style.display = 'none'; el('downloadCosto').style.display = 'none';
+  await new Promise((r) => setTimeout(r, 20));
+  const t0 = performance.now();
+  const r = runCostoOpportunita(n, seedStart, PERSONALITA[pkP1], PERSONALITA[pkP2], mercatoOpts);
+  const ms = (performance.now() - t0).toFixed(0);
+  el('statusCosto').textContent = `Fatto: ${n} partite in ${ms}ms.`
+    + (!mercatoOpts.festivalCollab?.abilitato ? ' — ATTENZIONE: Festival Collaborativo è OFF, zero eventi attesi.' : '');
+  el('resultCosto').innerHTML = costoHTML(r, mercatoOpts);
+  el('copyCosto').style.display = 'inline-block'; el('downloadCosto').style.display = 'inline-block';
+  el('copyCosto').onclick = async () => {
+    await copiaTesto(costoTesto(r, n, seedStart, mercatoOpts), el('copyCosto'), '📋 Copia');
+  };
+  el('downloadCosto').onclick = () => salva(`costo-opportunita-swamp-${n}p-seed${seedStart}-${Date.now()}.txt`,
+    new Blob([costoTesto(r, n, seedStart, mercatoOpts)], { type: 'text/plain' }), 'text/plain', '.txt');
+  el('runCosto').disabled = false;
+});
+
+// tutte le coppie non ordinate tra le 4 personalità (10): B-B, B-C, B-Cl, B-Bil, C-C, C-Cl, C-Bil, Cl-Cl, Cl-Bil, Bil-Bil
+const CHIAVI = ['builder', 'collector', 'closer', 'bilanciato'];
+const MATCHUP = CHIAVI.flatMap((a, i) => CHIAVI.slice(i).map((b) => [a, b]));
+const NOME = { builder: 'Builder', collector: 'Collector', closer: 'Closer', bilanciato: 'Bilanciato' };
+
+async function rigaMatrice(a, b, n, seedStart, mercatoOpts) {
+  board = board2p; // la matrice personalità resta un esperimento 2p
+  const s = await runBatch(n, seedStart, ['P1', 'P2'], { P1: PERSONALITA[a], P2: PERSONALITA[b] }, {}, mercatoOpts);
+  const tot = s.turni.length || 1;
+  return {
+    a, b, partite: s.turni.length,
+    turni: media(s.turni), primaPesca: media(s.primaPesca),
+    costruzioni: media(s.costruzioni), consegne: media(s.consegne),
+    pareggioPct: 100 * s.vittorie.pareggio / tot,
+  };
+}
+
+function matriceTesto(righe, n, seedStart, mercatoOpts) {
+  const L = [`PSYCADELIC SWAMP FEST — Matrice personalità (${n} partite/matchup, seed ${seedStart}..${seedStart + n - 1})`, ''];
+  L.push(...configBlock(mercatoOpts, ['P1', 'P2'], { P1: 'vario', P2: 'vario' }, {}).filter((l) => !l.startsWith('Personalità')), '');
+  L.push('Matchup                    Turni  Prima pesca  Costruzioni  Consegne  Pareggi');
+  for (const r of righe) L.push(
+    `${(NOME[r.a] + ' vs ' + NOME[r.b]).padEnd(26)}  ${r.turni.toFixed(1).padStart(5)}  `
+    + `${r.primaPesca.toFixed(1).padStart(11)}  ${r.costruzioni.toFixed(1).padStart(11)}  `
+    + `${r.consegne.toFixed(1).padStart(8)}  ${r.pareggioPct.toFixed(0).padStart(6)}%`);
+  return L.join('\n');
+}
+
+function matriceHTML(righe, mercatoOpts) {
+  let html = `<pre>${configBlock(mercatoOpts, ['P1', 'P2'], { P1: 'vario', P2: 'vario' }, {}).filter((l) => !l.startsWith('Personalità')).join('\n')}</pre>
+    <table><tr><th>Matchup</th><th>Turni</th><th>Prima pesca</th><th>Costruzioni</th><th>Consegne</th><th>Pareggi</th></tr>`;
+  for (const r of righe) html += `<tr><td>${NOME[r.a]} vs ${NOME[r.b]}</td><td>${r.turni.toFixed(1)}</td>`
+    + `<td>${r.primaPesca.toFixed(1)}</td><td>${r.costruzioni.toFixed(1)}</td><td>${r.consegne.toFixed(1)}</td>`
+    + `<td>${r.pareggioPct.toFixed(0)}%</td></tr>`;
+  return html + '</table>';
+}
+
+el('runMatrix').addEventListener('click', async () => {
+  const n = Math.max(1, Math.min(5000, +el('nGames').value || 1));
+  const seedStart = +el('seedStart').value || 1;
+  el('runMatrix').disabled = true;
+  el('resultMatrix').style.display = 'none';
+  el('copyMatrix').style.display = 'none';
+  el('downloadMatrix').style.display = 'none';
+  const mercatoOpts = letturaSetup();
+  const righe = [];
+  const t0 = performance.now();
+  for (const [a, b] of MATCHUP) {
+    el('statusMatrix').textContent = `Simulo ${NOME[a]} vs ${NOME[b]} (${righe.length + 1}/${MATCHUP.length})...`;
+    await new Promise((r) => setTimeout(r, 0)); // lascia respirare la UI tra un matchup e l'altro
+    righe.push(await rigaMatrice(a, b, n, seedStart, mercatoOpts));
+  }
+  const ms = (performance.now() - t0).toFixed(0);
+  el('statusMatrix').textContent = `Fatto: ${MATCHUP.length} matchup × ${n} partite in ${ms}ms.`;
+  el('resultMatrix').innerHTML = matriceHTML(righe, mercatoOpts);
+  el('resultMatrix').style.display = 'block';
+  el('copyMatrix').style.display = 'inline-block';
+  el('downloadMatrix').style.display = 'inline-block';
+  el('copyMatrix').onclick = async () => {
+    await copiaTesto(matriceTesto(righe, n, seedStart, mercatoOpts), el('copyMatrix'), '📋 Copia tabella');
+  };
+  el('downloadMatrix').onclick = () => salva(`matrice-personalita-swamp-${n}p-seed${seedStart}-${Date.now()}.txt`,
+    new Blob([matriceTesto(righe, n, seedStart, mercatoOpts)], { type: 'text/plain' }), 'text/plain', '.txt');
+  el('runMatrix').disabled = false;
+});
+</script>

@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Psycadelic Swamp Fest</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --p1: #29d0ff; --p2: #ff3d84;
+    --ink: #e9e4ff; --muted: #9a90c4;
+    --glass: rgba(30, 20, 55, 0.72);
+    --line: rgba(150, 120, 255, 0.22);
+  }
+  body {
+    margin: 0; color: var(--ink);
+    font: 14px/1.45 'Trebuchet MS', system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #3a1c6b 0%, transparent 55%),
+      radial-gradient(900px 600px at 15% 110%, #0c3b4a 0%, transparent 50%),
+      radial-gradient(900px 600px at 90% 90%, #4a123f 0%, transparent 50%),
+      linear-gradient(160deg, #0b0820 0%, #120a2e 55%, #0a0a24 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: .5px;
+    background: linear-gradient(90deg, #ff77e1, #ffd166, #6fffd1, #7cc6ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 12px rgba(255,120,230,.35)); font-weight: 800; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-style: italic; }
+
+  /* setup */
+  #setup { max-width: 540px; margin: 6vh auto; background: var(--glass);
+    border: 1px solid var(--line); border-radius: 18px; padding: 28px 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter: blur(8px); }
+  .row { display: flex; align-items: center; gap: 12px; margin: 14px 0; }
+  .row > b { width: 46px; color: var(--muted); font-weight: 700; }
+  .seg { display: inline-flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .seg button { padding: 7px 18px; border: 0; background: transparent; color: var(--muted); cursor: pointer; font-weight: 700; transition: .15s; }
+  .seg button.on { color: #fff; text-shadow: 0 0 10px currentColor; }
+  .seg[data-p="P1"] button.on { background: linear-gradient(180deg, #1a6f96, #0e4d6b); box-shadow: inset 0 0 16px #29d0ff66; }
+  .seg[data-p="P2"] button.on { background: linear-gradient(180deg, #97264f, #6b0e33); box-shadow: inset 0 0 16px #ff3d8466; }
+  .seg[data-p="P3"] button.on { background: linear-gradient(180deg, #4f9130, #2c5c17); box-shadow: inset 0 0 16px #7cff5a66; }
+  .seg[data-p="P4"] button.on { background: linear-gradient(180deg, #7a3fae, #4a1f70); box-shadow: inset 0 0 16px #c78bff66; }
+  .seg.spd { vertical-align: middle; } .seg.spd button { padding: 4px 12px; font-size: 13px; }
+  .seg.spd button.on { background: rgba(124,198,255,.18); box-shadow: inset 0 0 14px #7cc6ff44; }
+  #attive { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .zchip { padding: 5px 11px; border-radius: 20px; font-size: 13px; font-weight: 700; color: #120a2e;
+    box-shadow: 0 0 14px -2px currentColor; }
+  input[type=number] { background: rgba(0,0,0,.3); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 8px; padding: 5px 8px; width: 74px; }
+  button.mini { font-size: 12px; padding: 4px 11px; border: 1px solid var(--line); border-radius: 20px;
+    background: rgba(255,255,255,.05); color: var(--ink); cursor: pointer; }
+  button.mini:hover { background: rgba(255,255,255,.12); }
+  .go { margin-top: 20px; padding: 12px 26px; font-size: 15px; font-weight: 800; border: 0; border-radius: 12px;
+    color: #150a2e; cursor: pointer; letter-spacing: .5px;
+    background: linear-gradient(90deg, #ff77e1, #ffd166, #6fffd1);
+    box-shadow: 0 8px 26px -6px #ff77e1aa, 0 0 0 1px rgba(255,255,255,.15) inset; }
+  .go:hover { filter: brightness(1.08); }
+
+  /* game */
+  #game { display: none; height: 100vh; }
+  #game.on { display: flex; }
+  #left { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #stage { flex: 1; overflow: auto; padding: 8px; }
+  svg { display: block; margin: auto; }
+  polygon.click { cursor: pointer; }
+  text { text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .res { filter: drop-shadow(0 0 4px rgba(255,255,255,.85)); }
+  #bar { padding: 12px 16px; border-top: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(20,12,40,.4), rgba(10,7,25,.85));
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #bar button { font-size: 14px; font-weight: 700; padding: 8px 18px; cursor: pointer; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.05); transition: .15s; }
+  #bar button:hover:not(:disabled) { background: rgba(124,198,255,.16); border-color: #7cc6ff88; box-shadow: 0 0 16px -4px #7cc6ff; }
+  #bar button:disabled { opacity: .32; cursor: default; }
+  #hint { color: var(--muted); font-style: italic; }
+  #panel { width: 330px; border-left: 1px solid var(--line); padding: 16px;
+    background: linear-gradient(180deg, rgba(24,14,48,.55), rgba(12,8,28,.75)); overflow: auto; backdrop-filter: blur(6px); }
+  #panel h3 { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+  .pl { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 12px;
+    background: rgba(255,255,255,.03); }
+  .pl.turn { box-shadow: 0 0 0 1px currentColor, 0 0 22px -6px currentColor; }
+  .pl h3 { margin: 0 0 6px; display: flex; justify-content: space-between; text-transform: none; letter-spacing: 0; font-size: 15px; color: var(--ink); }
+  .pl .pv { font-weight: 800; }
+  .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; vertical-align: 0; margin-right: 6px; box-shadow: 0 0 10px currentColor; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; margin: 7px 0; font-size: 13px; background: rgba(255,255,255,.03); }
+  .card b { color: #ffd166; }
+  .lv1 { border-left: 3px solid #6fffd1; } .lv2 { border-left: 3px solid #ffd166; } .lv3 { border-left: 3px solid #ff6f9d; }
+  .card.ok { cursor: pointer; box-shadow: 0 0 18px -6px #6fffd1; border-color: #6fffd188; }
+  .card.ok:hover { background: rgba(111,255,209,.12); }
+  small { color: var(--muted); }
+  #turnlbl { font-weight: 700; margin-right: 6px; }
+  .tl { font: 12px/1.45 ui-monospace, 'SF Mono', Menlo, monospace; white-space: pre; color: var(--ink); margin: 0; }
+  .tl.scroll { max-height: 220px; overflow: auto; }
+</style>
+
+<div id="setup">
+  <h1>🪷 Psycadelic Swamp Fest</h1>
+  <p class="sub">La musica vive nella palude. Raccogli, costruisci, consegna.</p>
+  <div class="row"><b>Giocatori</b><span class="seg" data-p="n"><button data-t="2" class="on">2</button><button data-t="3">3</button><button data-t="4">4</button></span></div>
+  <div class="row"><b>P1</b><span class="seg" data-p="P1"><button data-t="human" class="on">Umano</button><button data-t="ai">AI</button></span></div>
+  <div class="row"><b>P2</b><span class="seg" data-p="P2"><button data-t="human">Umano</button><button data-t="ai" class="on">AI</button></span></div>
+  <div class="row" id="row-P3" style="display:none"><b>P3</b><span class="seg" data-p="P3"><button data-t="human">Umano</button><button data-t="ai" class="on">AI</button></span></div>
+  <div class="row" id="row-P4" style="display:none"><b>P4</b><span class="seg" data-p="P4"><button data-t="human">Umano</button><button data-t="ai" class="on">AI</button></span></div>
+  <div class="row"><b>Carta</b> <span style="color:var(--muted)">risorse attive</span> <button class="mini" id="reroll">rigenera</button></div>
+  <div id="attive"></div>
+  <p id="row-embed-note" class="sub" style="display:none;margin:4px 0">🔗 Regole importate dal Simulatore batch: mazzo, pescate, lavoratore esclusivo, bonus risorse, vantaggio di partenza e pozioni sono quelli di "Festival Economy" nel pannello principale.</p>
+  <div class="row"><b>Seed</b><input id="seed" type="number" value="1"></div>
+  <div class="row" id="row-lavesc"><label style="width:auto;display:flex;align-items:center;gap:6px;color:var(--muted)"><input type="checkbox" id="regolaLavoratoreEsclusivo" checked> <span style="color:var(--ink)">Lavoratore esclusivo</span> (un nodo ospita un solo lavoratore alla volta)</label></div>
+  <div class="row" id="row-cap2"><label style="width:auto;display:flex;align-items:center;gap:6px;color:var(--muted)"><input type="checkbox" id="regolaCapienza2"> <span style="color:var(--ink)">Capienza 2</span> (invece di 1: un nodo ospita fino a 2 lavoratori, sperimentale)</label></div>
+  <div class="row" id="row-spost"><label style="width:auto;display:flex;align-items:center;gap:6px;color:var(--muted)"><input type="checkbox" id="regolaSpostamentoObbligatorio"> <span style="color:var(--ink)">Spostamento obbligatorio</span> (non puoi restare/tornare sul nodo dove sei ORA)</label></div>
+  <div class="row"><label style="width:auto;display:flex;align-items:center;gap:6px;color:var(--muted)"><input type="checkbox" id="regolaCompraNodo"> <span style="color:var(--ink)">Regola: fonda nodo</span> (2 risorse uguali → nuovo nodo + primo seed, sperimentale)</label></div>
+  <div class="row"><label style="width:auto;display:flex;align-items:center;gap:6px;color:var(--muted)"><input type="checkbox" id="regolaAccampamentiMax"> <span style="color:var(--ink)">Accampamenti limitati</span> (sperimentale, fine partita all'esaurimento)</label> <input id="accampamentiMax" type="number" value="8" min="1" style="width:60px"></div>
+  <button class="go" id="start">▶ Inizia il Fest</button>
+</div>
+
+<div id="game">
+  <div id="left">
+    <div id="stage"><svg id="svg"></svg></div>
+    <div id="poz-bar" style="display:none; padding:6px 16px; gap:8px; align-items:center; flex-wrap:wrap; border-top:1px solid var(--line)"></div>
+    <div id="bar">
+      <span id="turnlbl"></span>
+      <button id="a-build" style="display:none">🏕 Costruisci</button>
+      <button id="a-pesca" style="display:none">🎣 Pesca</button>
+      <button id="a-ricarica" style="display:none">🔄 Ricarica pozione</button>
+      <button id="a-cancel" style="display:none">✕ Annulla</button>
+      <button id="a-new" class="go" style="display:none">🔄 Nuova partita</button>
+      <span id="hint"></span>
+      <span style="margin-left:auto; color:var(--muted)">AI:
+        <span class="seg spd" id="speed"><button data-v="550" class="on">normale</button><button data-v="150">veloce</button><button data-v="0">istant.</button></span>
+      </span>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="players"></div>
+    <h3 id="mkt-h">Mercato del Fest</h3>
+    <div id="market"></div>
+    <div id="report" style="display:none"></div>
+  </div>
+</div>
+
+<script type="module">
+import { makeBoard, nuovaPartita, gioca, finita, vincitore, diMano, costruisci, vicini, ZONES, accampamento, rng, POZIONE_DEFAULT_MODO }
+  from './engine.js?v=6';
+import { mossaGreedy, risorsaGratis } from './bot.js?v=6';
+
+const RIS = { girasole:'🌻', ibisco:'🌺', rana:'🐸', tartaruga:'🐢', fungo_rosso:'🍄', fungo_marrone:'🍄‍🟫', cactus:'🌵', peperoncino:'🌶️' };
+const POZ_ICON = { omissione:'👻', salto:'🐸', trasmutazione:'🔮', abbondanza:'🌾', crescita:'🌱', crescita2:'🌳', visione:'👁️', euforia:'🎉', convergenza:'✨' };
+const POZ_NOME = { omissione:'Omissione', salto:'Salto', trasmutazione:'Trasmutazione', abbondanza:'Abbondanza', crescita:'Crescita', crescita2:'Crescita 2', visione:'Visione', euforia:'Euforia', convergenza:'Convergenza' };
+// quali pozioni sono valide durante ciascun tipo di azione — deve rispecchiare `attese` in gioca() (engine.js).
+const POZ_PER_FASE = { costruisci: ['crescita','crescita2','salto','visione'], pesca: ['abbondanza','salto','euforia'], consegna: ['trasmutazione','omissione','convergenza'] };
+// se embeddato nel pannello "Gioca" di index.html, window.parent espone psycadelicAPI: allinea la
+// partita umana alle regole del Simulatore batch (mazzo, pescate, pozioni, ecc — vedi window.psycadelicAPI lì).
+const parentAPI = (() => { try { return window.parent !== window ? window.parent.psycadelicAPI : null; } catch { return null; } })();
+const PCOL = { P1:'#29d0ff', P2:'#ff3d84', P3:'#7cff5a', P4:'#c78bff' };
+// gradienti per zona: [chiaro, scuro]
+const ZTHEME = {
+  rosa:    ['#f06fc8', '#8f2f78'], arancio: ['#f0a63a', '#a8541a'],
+  verde:   ['#8fe04a', '#3f7a18'], giallo:  ['#f0e04a', '#a89012'],
+  centrale:['#caa26b', '#7a5c34'],
+};
+const CHIP = { rosa:'#f06fc8', arancio:'#f0a63a', verde:'#8fe04a', giallo:'#f0e04a' };
+const SIZE = 30;
+const hk = (q, r) => `${q},${r}`;
+const px = (q, r) => ({ x: SIZE*Math.sqrt(3)*(q + r/2), y: SIZE*1.5*r });
+function corners(cx, cy, f=1){ let p=[]; for(let i=0;i<6;i++){const a=Math.PI/180*(60*i+90);p.push(`${(cx+f*SIZE*Math.cos(a)).toFixed(1)},${(cy+f*SIZE*Math.sin(a)).toFixed(1)}`);} return p.join(' '); }
+
+let board2p, board3p, board4p, board, cfg, types = { P1:'human', P2:'ai', P3:'ai', P4:'ai' }, attive, state, vb;
+let mode = null, selNode = null, legalSet = new Set(), aiDelay = 550, curSeed = 1, nGiocatori = 2, compraRisorsa = null;
+// pozioni: pozioneAttiva = tipo scelto dal giocatore umano per la PROSSIMA azione (o null). pozData
+// raccoglie i dati extra multi-step (2° target di crescita, risorsa di abbondanza, ecc — vedi togglePozione()/onHexClick()).
+let pozioneAttiva = null, pozData = {};
+
+document.querySelectorAll('#speed button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#speed button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); aiDelay = +b.dataset.v;
+});
+
+// ---- setup ----
+// 3 board fisiche separate: 2p (standard), 3p (grande, 6 nodi), 4p (grande + 2 nodi "tessera extra"
+// su arancio/verde, editabile a parte in editor-4p.html — vedi genboard.js per l'origine della 3p).
+// Una mappa modificata e salvata con "Usa nel simulatore" nell'editor (localStorage) ha priorità sul file.
+function loadBoardJSON(localKey, file) {
+  const cached = localStorage.getItem(localKey);
+  if (cached) { try { return Promise.resolve(JSON.parse(cached)); } catch {} }
+  return fetch(file).then((r) => r.json());
+}
+Promise.all([
+  loadBoardJSON('swampBoard:2p', 'board.json'),
+  loadBoardJSON('swampBoard:3p', 'board-3-4p.json'),
+  loadBoardJSON('swampBoard:4p', 'board-4p.json'),
+  parentAPI ? Promise.resolve(null) : fetch('festival.json').then(r=>r.json()),
+]).then(([bd2, bd3, bd4, fc]) => {
+  board2p = makeBoard(bd2); board3p = makeBoard(bd3); board4p = makeBoard(bd4); board = board2p; cfg = fc;
+  if (parentAPI) {
+    // embeddato: risorse attive FISSE come nel Simulatore batch (non casuali) — il mazzo è tarato su
+    // questa combinazione specifica, vedi window.psycadelicAPI in index.html.
+    attive = parentAPI.attive();
+    renderAttive();
+    document.getElementById('reroll').style.display = 'none';
+    document.getElementById('row-embed-note').style.display = '';
+    for (const id of ['row-lavesc', 'row-cap2', 'row-spost']) document.getElementById(id).style.display = 'none';
+  } else rollAttive();
+});
+
+document.querySelectorAll('.seg[data-p="n"] button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.seg[data-p="n"] button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  nGiocatori = +b.dataset.t;
+  document.getElementById('row-P3').style.display = nGiocatori >= 3 ? '' : 'none';
+  document.getElementById('row-P4').style.display = nGiocatori >= 4 ? '' : 'none';
+});
+document.querySelectorAll('.seg[data-p]:not([data-p="n"])').forEach(seg => seg.querySelectorAll('button').forEach(b => b.onclick = () => {
+  seg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  types[seg.dataset.p] = b.dataset.t;
+}));
+document.getElementById('reroll').onclick = rollAttive;
+
+function renderAttive() {
+  document.getElementById('attive').innerHTML = Object.entries(attive)
+    .map(([z, r]) => `<span class="zchip" style="background:${CHIP[z]};color:${CHIP[z]}"><span style="color:#160a2e">${RIS[r]} ${r}</span></span>`).join('');
+}
+function rollAttive() {
+  attive = {};
+  for (const [z, zo] of Object.entries(ZONES)) attive[z] = zo.risorse[Math.random() < .5 ? 0 : 1];
+  renderAttive();
+}
+
+document.getElementById('start').onclick = () => {
+  const seed = +document.getElementById('seed').value || 1;
+  curSeed = seed;
+  board = nGiocatori === 4 ? board4p : nGiocatori === 3 ? board3p : board2p;
+  const giocatori = ['P1', 'P2', 'P3', 'P4'].slice(0, nGiocatori);
+  const manuali = { // regole sperimentali senza equivalente nel Simulatore batch: sempre locali
+    compraNodo: document.getElementById('regolaCompraNodo').checked,
+    ...(document.getElementById('regolaAccampamentiMax').checked ? { accampamentiMax: +document.getElementById('accampamentiMax').value || 8 } : {}),
+  };
+  let opts, risorsaGratisSecondo = false;
+  if (parentAPI) {
+    const s = parentAPI.setup(nGiocatori); // { mazzo, pescate, esposte, mercato, lavoratoreEsclusivo, capNodo?, capSegmenti?, fineSuLimiteSegmenti?, risorseVittoria?, pozioniModo, risorsaGratisSecondo, ... } — festivalCollab ignorato di proposito
+    risorsaGratisSecondo = !!s.risorsaGratisSecondo;
+    opts = {
+      seed, mazzo: s.mazzo, pescate: s.pescate, esposte: s.esposte, mercato: s.mercato,
+      lavoratoreEsclusivo: s.lavoratoreEsclusivo, pozioniModo: s.pozioniModo,
+      spostamentoObbligatorio: !!s.spostamentoObbligatorio,
+      ...(s.capNodo != null ? { capNodo: s.capNodo } : {}),
+      ...(s.capSegmenti != null ? { capSegmenti: s.capSegmenti } : {}),
+      ...(s.fineSuLimiteSegmenti ? { fineSuLimiteSegmenti: true } : {}),
+      ...(s.risorseVittoria ? { risorseVittoria: s.risorseVittoria } : {}),
+      ...manuali,
+    };
+  } else {
+    opts = {
+      seed, cfg, pozioniModo: POZIONE_DEFAULT_MODO,
+      lavoratoreEsclusivo: document.getElementById('regolaLavoratoreEsclusivo').checked,
+      ...(document.getElementById('regolaLavoratoreEsclusivo').checked && document.getElementById('regolaCapienza2').checked ? { capNodo: 2 } : {}),
+      spostamentoObbligatorio: document.getElementById('regolaSpostamentoObbligatorio').checked,
+      ...manuali,
+    };
+  }
+  state = nuovaPartita(attive, giocatori, opts);
+  if (risorsaGratisSecondo) {
+    // stesso pattern di partita() in bot.js: stream random separato da quello del mercato (seed+1e6).
+    const rand2 = rng(seed + 1e6);
+    for (let i = 1; i < giocatori.length; i++) risorsaGratis(state, giocatori[i], rand2);
+  }
+  pozioneAttiva = null; pozData = {};
+  resetReport();
+  setupViewBox();
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('game').classList.add('on');
+  loop();
+};
+
+function setupViewBox() {
+  let a=1e9,b=1e9,c=-1e9,d=-1e9;
+  for (const h of board.hexes.values()){ const {x,y}=px(h.q,h.r); a=Math.min(a,x);b=Math.min(b,y);c=Math.max(c,x);d=Math.max(d,y);}
+  const pad=SIZE+10; vb=[a-pad,b-pad,c-a+2*pad,d-b+2*pad];
+}
+
+// ---- game loop ----
+function loop() {
+  render();
+  if (finita(state)) { endGame(); return; }
+  const cur = diMano(state).id;
+  if (types[cur] !== 'ai') { mode=null; selNode=null; pozioneAttiva=null; pozData={}; updateBar(); return; }
+  for (const id of ['a-build','a-pesca','a-ricarica','a-cancel']) document.getElementById(id).style.display='none';
+  document.getElementById('poz-bar').style.display = 'none';
+  document.getElementById('hint').textContent = `${cur} (AI) sta danzando nella palude…`;
+  if (aiDelay === 0) {                          // istantanea: gira senza render finché non tocca a un umano o finisce
+    let guard = 0;
+    while (!finita(state) && types[diMano(state).id]==='ai' && guard++ < 5000) stepAI();
+    if (!finita(state) && types[diMano(state).id]==='ai') { render(); document.getElementById('hint').textContent='AI in stallo'; return; }
+    loop();
+  } else setTimeout(aiMove, aiDelay);
+}
+function stepAI() {                             // una mossa AI (o passa se in stallo)
+  const az = mossaGreedy(state, board, diMano(state).id);
+  if (!az) { state.turno = (state.turno+1) % state.giocatori.length; return; }
+  gioca(state, board, az);
+}
+function aiMove() { stepAI(); loop(); }
+
+// ---- azioni umane ----
+// Flusso: scegli nodo (o festival) → se nodo, Costruisci/Pesca; se festival, consegna carta. Le
+// pozioni (crescita/crescita2/abbondanza/euforia) allungano il flusso con uno o due passaggi extra
+// prima di eseguire l'azione — vedi togglePozione()/renderPozBar()/onHexClick().
+document.getElementById('a-build').onclick = () => {
+  if (mode!=='node') return;
+  mode='build-hex'; computeLegal(selNode); updateBar(); render();
+};
+document.getElementById('a-pesca').onclick = () => {
+  if (mode!=='node') return;
+  if (pozioneAttiva === 'abbondanza') { mode='pesca-abbondanza'; updateBar(); render(); return; }
+  if (pozioneAttiva === 'euforia') { mode='pesca-euforia'; computeLegal(selNode); updateBar(); render(); return; }
+  try { apply({ tipo:'pesca', nodeK:selNode, ...(pozioneAttiva==='salto' ? { pozioneId:'salto' } : {}) }); } catch(e){ flash(e.message); }
+};
+document.getElementById('a-ricarica').onclick = () => { mode='ricarica-scegli'; updateBar(); render(); };
+document.getElementById('a-cancel').onclick = () => { mode=null; selNode=null; pozioneAttiva=null; pozData={}; updateBar(); render(); };
+
+function apply(az) { mode=null; selNode=null; pozioneAttiva=null; pozData={}; try { gioca(state, board, az); } catch(e) { flash(e.message); render(); return; } loop(); }
+
+function togglePozione(tipo) { pozioneAttiva = pozioneAttiva === tipo ? null : tipo; pozData = {}; updateBar(); render(); }
+
+// nodo/festival occupato da un lavoratore avversario (regola "lavoratore esclusivo")? Se sì, non è
+// selezionabile: eviterebbe di far scegliere un nodo per poi rifiutare la costruzione a valle.
+// Bypassato dalla pozione "salto" (scelta PRIMA di cliccare il nodo, vedi renderPozBar).
+function nodoRealmenteOccupato(k) {
+  const cap = state.regole?.capNodo ?? (state.regole?.lavoratoreEsclusivo ? 1 : Infinity);
+  if (!Number.isFinite(cap)) return false;
+  const pid = diMano(state).id;
+  return state.giocatori.filter((g) => g.id !== pid && g.lavoratore === k).length >= cap;
+}
+function occupatoDaAvversario(k) { return pozioneAttiva === 'salto' ? false : nodoRealmenteOccupato(k); }
+
+function onHexClick(h) {
+  const k = hk(h.q, h.r), pid = diMano(state).id;
+  if (types[pid] !== 'human') return;
+  if (mode === 'build-hex') {
+    if (!legalSet.has(k)) return;
+    if (pozioneAttiva === 'crescita') { pozData.target1 = k; mode = 'build-hex2'; legalSet = computeLegalIn(statoConTarget(selNode, k), selNode); updateBar(); render(); return; }
+    if (pozioneAttiva === 'crescita2') { pozData.target1 = k; mode = 'build-node2'; updateBar(); render(); return; }
+    apply({ tipo:'costruisci', nodeK:selNode, targetK:k, ...(pozioneAttiva==='visione' ? { pozioneId:'visione' } : pozioneAttiva==='salto' ? { pozioneId:'salto' } : {}) });
+    return;
+  }
+  if (mode === 'build-hex2') { if (legalSet.has(k)) apply({ tipo:'costruisci', nodeK:selNode, targetK:pozData.target1, targetK2:k, pozioneId:'crescita' }); return; }
+  if (mode === 'build-node2') {
+    if (accampamento(state, board, pid, k).size > 0 && k !== selNode) {
+      pozData.nodeK2 = k; mode = 'build-hex2-other'; legalSet = computeLegalIn(statoConTarget(selNode, pozData.target1), k); updateBar(); render();
+    }
+    return;
+  }
+  if (mode === 'build-hex2-other') { if (legalSet.has(k)) apply({ tipo:'costruisci', nodeK:selNode, targetK:pozData.target1, targetK2:k, nodeK2:pozData.nodeK2, pozioneId:'crescita2' }); return; }
+  if (mode === 'pesca-euforia') { if (legalSet.has(k)) apply({ tipo:'pesca', nodeK:selNode, pozioneId:'euforia', targetK:k }); return; }
+  if (mode === 'compra-target') { if (legalSet.has(k)) apply({ tipo:'compraNodo', hexK:selNode, risorsa:compraRisorsa, targetK:k }); return; }
+  if (mode === 'consegna') return;                        // le carte si cliccano nel pannello
+  if (mode !== null) return;                              // fase di scelta solo da stato pulito
+  if (h.node === 'nodo' || state.nodiExtra?.has(k)) {
+    if (state.regole?.spostamentoObbligatorio && state.giocatori.find(p=>p.id===pid).lavoratore === k) { flash('Spostamento obbligatorio: non puoi restare qui, scegli un altro nodo'); return; }
+    if (occupatoDaAvversario(k)) { flash('Nodo occupato da un altro lavoratore'); return; }
+    if (pozioneAttiva === 'salto' && !nodoRealmenteOccupato(k)) pozioneAttiva = null; // libero comunque: non sprecare la carica
+    selNode = k; mode = 'node'; updateBar(); render();
+  }
+  else if (h.node === 'festival') {
+    if (state.regole?.spostamentoObbligatorio && state.giocatori.find(p=>p.id===pid).lavoratore === 'festival') { flash('Spostamento obbligatorio: fai un giro su un nodo prima di consegnare di nuovo'); return; }
+    selNode = 'festival'; mode = 'consegna'; updateBar(); render();
+  }
+  else if (candidatoNodo(h)) {
+    const g = state.giocatori.find(p => p.id === pid);
+    compraRisorsa = risorsaMigliore(g);
+    selNode = k; mode = 'compra-target'; computeLegalCompra(k); updateBar(); render();
+  }
+}
+
+// stato-clone con `targetK` già costruito a `nodeK` — per calcolare il 2° target di crescita/crescita2.
+function statoConTarget(nodeK, targetK) {
+  const clone = { attive: state.attive, regole: state.regole, nodiExtra: state.nodiExtra, built: new Map(state.built), giocatori: state.giocatori.map(g=>({...g, droghe:[...g.droghe]})) };
+  costruisci(clone, board, diMano(state).id, nodeK, targetK);
+  return clone;
+}
+function computeLegalIn(baseState, nodeK) {
+  const legal = new Set(); const pid = diMano(state).id;
+  const node = board.hexes.get(nodeK);
+  for (const h of board.hexes.values()) {
+    const hh = hk(h.q,h.r);
+    if (h.zone !== node.zone || h.node || baseState.built.has(hh)) continue;
+    const clone = { attive: baseState.attive, regole: baseState.regole, nodiExtra: baseState.nodiExtra, built: new Map(baseState.built), giocatori: baseState.giocatori.map(g=>({...g, droghe:[...g.droghe]})) };
+    try { costruisci(clone, board, pid, nodeK, hh); legal.add(hh); } catch {}
+  }
+  return legal;
+}
+function computeLegal(nodeK) { legalSet = computeLegalIn(state, nodeK); }
+
+// esagono candidato per "fonda nodo": libero, zona reale, senza risorsa attiva, non ancora nodo
+function candidatoNodo(h) {
+  if (!state.regole?.compraNodo || h.node || !h.zone || h.resource || state.built.has(hk(h.q,h.r))) return false;
+  if (state.nodiExtra?.has(hk(h.q,h.r))) return false;
+  const g = state.giocatori.find(p => p.id === diMano(state).id);
+  return !!risorsaMigliore(g);
+}
+// risorsa più abbondante nel carico con almeno 2 copie (quella spesa per fondare il nodo)
+function risorsaMigliore(g) {
+  const conte = {};
+  for (const r of g.droghe) conte[r] = (conte[r] || 0) + 1;
+  const validi = Object.entries(conte).filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]);
+  return validi.length ? validi[0][0] : null;
+}
+function computeLegalCompra(hexK) {
+  legalSet = new Set(); const pid = diMano(state).id;
+  const h = board.hexes.get(hexK);
+  for (const v of board.hexes.values()) {
+    if (v.zone !== h.zone || v.node || state.built.has(hk(v.q,v.r))) continue;
+    const clone = { attive: state.attive, regole: state.regole, nodiExtra: new Set([...(state.nodiExtra||[]), hexK]),
+      built: new Map(state.built), giocatori: state.giocatori.map(g=>({...g, droghe:[...g.droghe]})) };
+    try { costruisci(clone, board, pid, hexK, hk(v.q,v.r)); legalSet.add(hk(v.q,v.r)); } catch {}
+  }
+}
+
+// ---- rendering ----
+const DEFS = `<defs>
+  <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="glowS" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  ${Object.entries(ZTHEME).map(([z,[c1,c2]])=>`<linearGradient id="g_${z}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`).join('')}
+  <radialGradient id="g_fest" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#6a3aa0"/><stop offset="1" stop-color="#1c1030"/></radialGradient>
+  <linearGradient id="g_nodo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3626"/><stop offset="1" stop-color="#241608"/></linearGradient>
+</defs>`;
+
+function activeRes(h){ return h.resource && state.attive[h.zone] === h.resource; }
+function render() {
+  const svg = document.getElementById('svg');
+  // niente maxWidth/maxHeight legati a vb: sono le coordinate NATIVE dell'hex layout (px fissi), non
+  // un limite di design — capirle lì impediva alla mappa di ingrandirsi oltre la sua dimensione
+  // "naturale" su schermi larghi. L'SVG è vettoriale: riempie il contenitore, preserveAspectRatio
+  // (default) mantiene le proporzioni senza deformare.
+  svg.setAttribute('viewBox', vb.join(' ')); svg.style.width = '100%'; svg.style.height = '100%';
+  svg.innerHTML = DEFS;
+  const pid = diMano(state).id, human = types[pid] === 'human', pidLavoratore = state.giocatori.find(p=>p.id===pid).lavoratore;
+  for (const h of board.hexes.values()) {
+    const { x, y } = px(h.q, h.r), k = hk(h.q, h.r);
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    const fondato = state.nodiExtra?.has(k); // nodo fondato in partita (regola "fonda nodo"), non sulla board statica
+    const fill = h.node === 'festival' ? 'url(#g_fest)' : (h.node === 'nodo' || fondato) ? 'url(#g_nodo)' : `url(#g_${h.zone})`;
+    let stroke = 'rgba(10,6,24,.85)', sw = 1.4, filt = '', clickable = false;
+    if (human) {
+      if (mode===null && (h.node==='nodo' || h.node==='festival' || fondato) && state.regole?.spostamentoObbligatorio && pidLavoratore===k) { stroke='#ff9d3a'; sw=2.5; filt=' filter="url(#glow)"'; clickable=false; }
+      else if (mode===null && (h.node==='nodo' || fondato) && occupatoDaAvversario(k)) { stroke='#ff3d84'; sw=2.5; filt=' filter="url(#glow)"'; clickable=false; }
+      else if (mode===null && (h.node==='nodo' || h.node==='festival' || fondato)) { stroke='#7cffd6'; sw=3; filt=' filter="url(#glow)"'; clickable=true; }
+      else if (mode===null && candidatoNodo(h)) { stroke='#ffd166'; sw=2; filt=' filter="url(#glow)"'; clickable=true; }
+      else if (['build-hex','build-hex2','build-hex2-other','pesca-euforia','compra-target'].includes(mode) && legalSet.has(k)) { stroke='#7cffd6'; sw=3; filt=' filter="url(#glow)"'; clickable=true; }
+      else if (mode==='build-node2' && accampamento(state, board, pid, k).size > 0 && k !== selNode) { stroke='#ff77e1'; sw=3; filt=' filter="url(#glow)"'; clickable=true; }
+      else if ((mode==='node' || mode==='compra-target') && k===selNode) { stroke='#ffd166'; sw=3.5; filt=' filter="url(#glow)"'; }
+      else if (['build-hex2','build-hex2-other'].includes(mode) && k===pozData.target1) { stroke='#ff77e1'; sw=3.5; filt=' filter="url(#glow)"'; }
+      else if (mode==='consegna' && h.node==='festival') { stroke='#ffd166'; sw=3; filt=' filter="url(#glow)"'; }
+    }
+    let inner = `<polygon class="${clickable?'click':''}" points="${corners(x,y)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${filt}/>`;
+    if (h.resource) inner += `<text class="${activeRes(h)?'res':''}" x="${x}" y="${y}" font-size="32" opacity="${activeRes(h)?1:0.22}">${RIS[h.resource]}</text>`;
+    if (h.node==='festival') inner += `<text x="${x}" y="${y}" font-size="34" filter="url(#glowS)">🪷</text>`;
+    if (h.node==='nodo') inner += `<text x="${x}" y="${y}" font-size="30">🟤</text>`;
+    if (fondato) inner += `<text x="${x}" y="${y}" font-size="28">🏛</text>`;
+    const owner = state.built.get(k);
+    if (owner) inner += `<polygon points="${corners(x,y,0.6)}" fill="${PCOL[owner]}" fill-opacity="0.92" stroke="#fff" stroke-width="1.4" filter="url(#glowS)"/>`;
+    g.innerHTML = inner;
+    if (clickable) g.querySelector('polygon').addEventListener('click', () => onHexClick(h));
+    svg.appendChild(g);
+  }
+  const N = state.giocatori.length;
+  state.giocatori.forEach((gp, i) => {
+    const loc = gp.lavoratore; let c;
+    if (loc === 'festival') c = px(0,0); else { const [q,r]=loc.split(',').map(Number); c = px(q,r); }
+    // disposizione a cerchio attorno al centro dell'hex: con 2 giocatori riproduce l'offset -10/10 di prima
+    const ang = N === 2 ? (i === 0 ? Math.PI : 0) : (2 * Math.PI * i / N - Math.PI / 2);
+    const offx = 10 * Math.cos(ang), offy = N === 2 ? 0 : 10 * Math.sin(ang);
+    const w = document.createElementNS('http://www.w3.org/2000/svg','g');
+    w.style.pointerEvents = 'none';
+    w.innerHTML = `<circle cx="${c.x+offx}" cy="${c.y+offy}" r="10" fill="${PCOL[gp.id]}" stroke="#fff" stroke-width="2" filter="url(#glowS)"/><text x="${c.x+offx}" y="${c.y+offy}" font-size="11" fill="#0a0620" font-weight="bold">${gp.id[1]}</text>`;
+    svg.appendChild(w);
+  });
+  panel();
+}
+
+function panel() {
+  const cur = diMano(state).id;
+  document.getElementById('turnlbl').innerHTML = `<span class="dot" style="color:${PCOL[cur]}"></span>Turno: <b>${cur}</b> · ${types[cur]==='ai'?'AI':'umano'}${state.ultimoGiro ? ' · <b style="color:#ff6b6b">ultimo giro!</b>' : ''}`;
+  document.getElementById('players').innerHTML = state.giocatori.map(g => {
+    const load = Object.entries(g.droghe.reduce((m,r)=>(m[r]=(m[r]||0)+1,m),{})).map(([r,c])=>`${RIS[r]}${c}`).join(' ') || '<small>vuoto</small>';
+    const accamp = state.regole?.accampamentiMax != null ? ` · accampamenti: ${g.accampamentiRimasti}` : '';
+    const poz = Object.entries(g.pozioni).filter(([,p]) => p.cariche > 0 || p.riserva > 0);
+    const pozLine = poz.length ? `<div style="color:var(--muted);font-size:12px;margin-top:2px">🧪 ${poz.map(([t,p]) => `${POZ_ICON[t]}${p.cariche}${p.riserva ? '+' + p.riserva : ''}`).join(' ')}</div>` : '';
+    return `<div class="pl ${g.id===cur?'turn':''}" style="color:${PCOL[g.id]}"><h3><span><span class="dot" style="color:${PCOL[g.id]}"></span>${g.id}</span><span class="pv" style="color:${PCOL[g.id]}">${g.punti} PV</span></h3>
+      <div style="color:var(--ink)">carte: ${g.carte.length} · carico: ${load}${accamp}</div>${pozLine}</div>`;
+  }).join('');
+  document.getElementById('market').innerHTML = state.festival.mercato.map(c => {
+    const need = Object.entries(c.need).map(([r,n])=>`<span style="font-size:1.9em;vertical-align:middle">${RIS[r]}<span style="font-size:.75em">×${n}</span></span>`).join(' ');
+    let ok = false, extraStyle = '';
+    if (mode === 'consegna' && types[cur]==='human') {
+      if (pozioneAttiva === 'convergenza' && pozData.cartaId1) {
+        ok = c.id !== pozData.cartaId1 && canDeliver(c, droghePost(pozData.cartaId1));
+      } else if (pozioneAttiva === 'omissione' && !canDeliver(c) && omissioneCopre(c)) {
+        ok = true; extraStyle = ' style="box-shadow:0 0 18px -6px #ffd166;border-color:#ffd16688"';
+      } else if (pozioneAttiva === 'trasmutazione' && !canDeliver(c) && trasmutazionePagata(c)) {
+        ok = true; extraStyle = ' style="box-shadow:0 0 18px -6px #ffd166;border-color:#ffd16688"';
+      } else {
+        ok = canDeliver(c);
+      }
+    }
+    const sel = pozioneAttiva === 'convergenza' && c.id === pozData.cartaId1 ? ' style="box-shadow:0 0 0 2px #ffd166"' : '';
+    return `<div class="card lv${c.livello} ${ok?'ok':''}"${extraStyle}${sel} data-id="${c.id}"><b>L${c.livello}</b> · ${c.punti} PV<br>${need}</div>`;
+  }).join('') || '<small>vuoto — il Fest è finito</small>';
+  if (mode==='consegna') document.querySelectorAll('.card.ok').forEach(el => el.onclick = () => onCardClick(el.dataset.id));
+  renderPozBar();
+}
+
+// --- pozioni "consegna": omissione/trasmutazione (1 carta) e convergenza (2 carte) ---
+function correnteG() { return state.giocatori.find(p=>p.id===diMano(state).id); }
+function canDeliver(c, droghe) { droghe = droghe || correnteG().droghe; return Object.entries(c.need).every(([r,n]) => droghe.filter(x=>x===r).length >= n); }
+function shortfall(c, droghe) { droghe = droghe || correnteG().droghe; return Object.entries(c.need).map(([r,n]) => [r, n - droghe.filter(x=>x===r).length]).filter(([,d]) => d > 0); }
+// omissione copre SOLO 1 unità di 1 risorsa — se la carta manca di più, resta non completabile.
+function omissioneCopre(c) { const s = shortfall(c); return (s.length===1 && s[0][1]===1) ? s[0][0] : null; }
+// trasmutazione: manca 1 unità di 1 risorsa, pagabile con 2 unità di un'altra risorsa posseduta.
+function trasmutazionePagata(c) {
+  const s = shortfall(c);
+  if (!(s.length===1 && s[0][1]===1)) return null;
+  const conte = {}; for (const r of correnteG().droghe) conte[r]=(conte[r]||0)+1;
+  const opz = Object.entries(conte).filter(([r,n]) => r!==s[0][0] && n>=2).sort((a,b)=>b[1]-a[1]);
+  return opz.length ? { mancante:s[0][0], pagata:opz[0][0] } : null;
+}
+function droghePost(cartaId) { // carico DOPO aver consegnato cartaId — per la 2ª carta di convergenza
+  const c = state.festival.mercato.find(x=>x.id===cartaId);
+  const d = [...correnteG().droghe];
+  for (const [r,n] of Object.entries(c.need)) for (let i=0;i<n;i++) { const idx=d.indexOf(r); if (idx>=0) d.splice(idx,1); }
+  return d;
+}
+function onCardClick(cartaId) {
+  const c = state.festival.mercato.find(x=>x.id===cartaId);
+  if (pozioneAttiva === 'convergenza') {
+    if (!pozData.cartaId1) { pozData.cartaId1 = cartaId; updateBar(); render(); return; }
+    apply({ tipo:'consegna', cartaId: pozData.cartaId1, pozioneId:'convergenza', cartaId2: cartaId });
+    return;
+  }
+  if (pozioneAttiva === 'omissione' && !canDeliver(c)) {
+    const r = omissioneCopre(c);
+    if (r) { apply({ tipo:'consegna', cartaId, pozioneId:'omissione', ignora:r }); return; }
+  }
+  if (pozioneAttiva === 'trasmutazione' && !canDeliver(c)) {
+    const sost = trasmutazionePagata(c);
+    if (sost) { apply({ tipo:'consegna', cartaId, pozioneId:'trasmutazione', sostituzione:sost }); return; }
+  }
+  apply({ tipo:'consegna', cartaId });
+}
+
+// --- pozioni: quali sono usabili ORA, e la barra dei toggle/picker sotto la mappa ---
+function pozioniCon(pid, fase) {
+  const g = state.giocatori.find(p=>p.id===pid);
+  return (POZ_PER_FASE[fase]||[]).filter(t => g.pozioni[t] && g.pozioni[t].cariche > 0);
+}
+function ricaricaDisponibile(pid) {
+  const g = state.giocatori.find(p=>p.id===pid);
+  return Object.values(g.pozioni).some(pz => pz.modoRicarica==='ricaricabile' && pz.cariche < pz.caricheMax && Object.keys(pz.need).some(r => g.droghe.includes(r)));
+}
+function renderPozBar() {
+  const bar = document.getElementById('poz-bar');
+  const cur = diMano(state).id;
+  if (types[cur] !== 'human') { bar.style.display='none'; return; }
+  const g = state.giocatori.find(p=>p.id===cur);
+  let html = '';
+  const btn = (attrs, label) => `<button class="mini" ${attrs}>${label}</button>`;
+  if (mode === null) {
+    const salto = g.pozioni.salto;
+    if (salto && salto.cariche > 0) html += btn(`data-poz="salto" style="${pozioneAttiva==='salto'?'background:rgba(124,255,214,.25)':''}"`, `🐸 Salto (${salto.cariche}${salto.riserva?'+'+salto.riserva:''})`);
+  } else if (mode === 'node') {
+    for (const t of ['crescita','crescita2','visione','abbondanza','euforia']) {
+      const pz = g.pozioni[t];
+      if (pz && pz.cariche > 0) html += btn(`data-poz="${t}" style="${pozioneAttiva===t?'background:rgba(124,255,214,.25)':''}"`, `${POZ_ICON[t]} ${POZ_NOME[t]} (${pz.cariche}${pz.riserva?'+'+pz.riserva:''})`);
+    }
+  } else if (mode === 'consegna') {
+    for (const t of ['omissione','trasmutazione','convergenza']) {
+      const pz = g.pozioni[t];
+      if (pz && pz.cariche > 0) html += btn(`data-poz="${t}" style="${pozioneAttiva===t?'background:rgba(124,255,214,.25)':''}"`, `${POZ_ICON[t]} ${POZ_NOME[t]} (${pz.cariche}${pz.riserva?'+'+pz.riserva:''})`);
+    }
+  } else if (mode === 'pesca-abbondanza') {
+    html += '<span style="color:var(--muted)">Scegli la risorsa extra:</span>';
+    for (const r of [...new Set(Object.values(state.attive))]) html += btn(`data-abb="${r}"`, `${RIS[r]} ${r}`);
+  } else if (mode === 'ricarica-scegli') {
+    html += '<span style="color:var(--muted)">Ricarica quale pozione?</span>';
+    for (const [t, pz] of Object.entries(g.pozioni)) {
+      if (pz.modoRicarica === 'ricaricabile' && pz.cariche < pz.caricheMax) html += btn(`data-ricscegli="${t}"`, `${POZ_ICON[t]} ${POZ_NOME[t]} (${pz.cariche}/${pz.caricheMax})`);
+    }
+  } else if (mode === 'ricarica-risorse') {
+    const pz = g.pozioni[pozData.ricaricaTipo], scelte = pozData.risorseScelte || [];
+    const spazioResiduo = (pz.caricheMax - pz.cariche) - scelte.length;
+    html += `<span style="color:var(--muted)">Paga risorse per ${POZ_NOME[pozData.ricaricaTipo]}:</span>`;
+    if (spazioResiduo > 0) for (const r of Object.keys(pz.need)) {
+      const have = g.droghe.filter(x=>x===r).length - scelte.filter(x=>x===r).length;
+      if (have > 0) html += btn(`data-ricres="${r}"`, `+${RIS[r]} ${r} (${have} disp.)`);
+    }
+    if (scelte.length) html += `<span>selezionate: ${scelte.map(r=>RIS[r]).join(' ')}</span>${btn('data-ricconferma', `✓ Conferma (${scelte.length})`)}`;
+    html += btn('data-ricannulla', 'Annulla');
+  }
+  bar.innerHTML = html;
+  bar.style.display = html ? 'flex' : 'none';
+  bar.querySelectorAll('[data-poz]').forEach(b => b.onclick = () => togglePozione(b.dataset.poz));
+  bar.querySelectorAll('[data-abb]').forEach(b => b.onclick = () => { try { apply({ tipo:'pesca', nodeK:selNode, pozioneId:'abbondanza', extraRisorsa: b.dataset.abb }); } catch(e){ flash(e.message); } });
+  bar.querySelectorAll('[data-ricscegli]').forEach(b => b.onclick = () => { pozData = { ricaricaTipo: b.dataset.ricscegli, risorseScelte: [] }; mode = 'ricarica-risorse'; updateBar(); render(); });
+  bar.querySelectorAll('[data-ricres]').forEach(b => b.onclick = () => { pozData.risorseScelte = [...(pozData.risorseScelte||[]), b.dataset.ricres]; updateBar(); render(); });
+  bar.querySelectorAll('[data-ricconferma]').forEach(b => b.onclick = () => apply({ tipo:'ricarica', pozioneType: pozData.ricaricaTipo, risorse: pozData.risorseScelte }));
+  bar.querySelectorAll('[data-ricannulla]').forEach(b => b.onclick = () => { mode=null; pozData={}; updateBar(); render(); });
+}
+
+function updateBar() {
+  const cur = diMano(state).id, human = types[cur]==='human';
+  const show = (id, on) => document.getElementById(id).style.display = on ? '' : 'none';
+  show('a-build', human && mode==='node');
+  show('a-pesca', human && mode==='node');
+  show('a-ricarica', human && mode===null && ricaricaDisponibile(cur));
+  show('a-cancel', human && mode!==null);
+  let hint = '';
+  if (human) {
+    if (mode===null) {
+      hint = state.regole?.compraNodo
+        ? 'Scegli un nodo, il festival per consegnare — o un esagono libero per fondarne uno nuovo (2 risorse uguali)'
+        : 'Scegli un nodo — oppure il festival per consegnare';
+      if (state.regole?.lavoratoreEsclusivo) {
+        const haSalto = pozioniCon(cur,'costruisci').includes('salto') || pozioniCon(cur,'pesca').includes('salto');
+        hint += ' (i nodi in rosso hanno già un lavoratore avversario' + (haSalto ? ' — 🐸 Salto qui sotto li rende comunque scegliibili)' : ')');
+      }
+      if (state.regole?.spostamentoObbligatorio) hint += ' — in arancione dove sei ORA: spostamento obbligatorio, non puoi restarci';
+    }
+    else if (mode==='node') hint = 'Costruisci o pesca a questo nodo' + (pozioneAttiva==='salto' ? ' (🐸 salto: ignora l\'esclusività del nodo)' : '');
+    else if (mode==='build-hex') hint = 'Scegli l’esagono da costruire' + (pozioneAttiva ? ` (pozione attiva: ${POZ_NOME[pozioneAttiva]})` : '');
+    else if (mode==='build-hex2') hint = '🌱 Crescita: scegli il 2° segmento, stesso nodo';
+    else if (mode==='build-node2') hint = '🌳 Crescita 2: scegli un ALTRO tuo nodo già fondato (evidenziato)';
+    else if (mode==='build-hex2-other') hint = '🌳 Crescita 2: scegli l\'esagono da costruire nel nuovo nodo';
+    else if (mode==='pesca-abbondanza') hint = '🌾 Abbondanza: scegli la risorsa extra qui sotto';
+    else if (mode==='pesca-euforia') hint = '🎉 Euforia: scegli l\'esagono per la costruzione gratuita';
+    else if (mode==='ricarica-scegli') hint = 'Scegli quale pozione ricaricare';
+    else if (mode==='ricarica-risorse') hint = 'Scegli le risorse da spendere, poi conferma';
+    else if (mode==='compra-target') hint = `Spendi 2× ${RIS[compraRisorsa]} ${compraRisorsa} per fondare il nodo — scegli l'esagono vicino da seminare`;
+    else if (mode==='consegna') hint = 'Scegli una carta che puoi completare' + (pozioneAttiva ? ` (pozione attiva: ${POZ_NOME[pozioneAttiva]} — anche le carte quasi complete si illuminano)` : '');
+  }
+  document.getElementById('hint').textContent = hint;
+  renderPozBar();
+}
+function flash(msg){ document.getElementById('hint').textContent = msg; }
+
+function endGame() {
+  const w = vincitore(state);
+  document.getElementById('hint').innerHTML = `<b style="color:#ffd166">Il Fest è finito.</b> ${w ? `Vince <span style="color:${PCOL[w.id]}">${w.id}</span> con ${w.punti} PV 🎉` : 'Pareggio!'}`;
+  for (const id of ['a-build','a-pesca','a-ricarica','a-cancel']) document.getElementById(id).style.display='none';
+  document.getElementById('poz-bar').style.display = 'none';
+  document.getElementById('a-new').style.display = '';
+  mostraReport();
+}
+
+// salva con scelta cartella (File System Access API); fallback: download classico
+async function salva(nome, blob, tipo, ext) {
+  if (window.showSaveFilePicker) {
+    try {
+      const h = await window.showSaveFilePicker({ suggestedName: nome, types: [{ description: tipo, accept: { [tipo]: [ext] } }] });
+      const w = await h.createWritable(); await w.write(blob); await w.close(); return;
+    } catch (e) { if (e.name === 'AbortError') return; }   // utente ha annullato
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; a.click(); URL.revokeObjectURL(a.href);
+}
+
+// rasterizza l'SVG della mappa in PNG (sfondo scuro incluso)
+async function scaricaMappaPNG() {
+  const [minX, minY, w, h] = vb, scale = 2;
+  const clone = document.getElementById('svg').cloneNode(true);
+  clone.setAttribute('width', w * scale); clone.setAttribute('height', h * scale); clone.setAttribute('viewBox', vb.join(' '));
+  const xml = new XMLSerializer().serializeToString(clone);
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); });
+  const canvas = document.createElement('canvas'); canvas.width = w * scale; canvas.height = h * scale;
+  const ctx = canvas.getContext('2d'); ctx.fillStyle = '#0b0820'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+  await salva(`mappa-swamp-seed${curSeed}-${Date.now()}.png`, blob, 'image/png', '.png');
+}
+
+// --- timeline azioni (state.log) ---
+function timelineBuckets(size = 10) {
+  const bk = [];
+  for (const e of state.log) {
+    const i = Math.floor((e.n - 1) / size);
+    (bk[i] ||= { c: 0, p: 0, x: 0 });
+    if (e.tipo === 'costruisci') bk[i].c++; else if (e.tipo === 'pesca') bk[i].p++; else bk[i].x++;
+  }
+  return bk;
+}
+function timelineTesto(size = 10) {
+  const bk = timelineBuckets(size), tot = state.log.length, L = [`TIMELINE (per ${size} turni)  C=costruisci P=pesca X=consegna`];
+  bk.forEach((b, i) => {
+    const a = i * size + 1, z = Math.min((i + 1) * size, tot);
+    L.push(`Turni ${String(a).padStart(2)}-${String(z).padStart(2)}:  C ${'█'.repeat(b.c)}${b.c}  P ${'█'.repeat(b.p)}${b.p}  X ${'█'.repeat(b.x)}${b.x}`);
+  });
+  L.push('', 'CRONOLOGIA');
+  for (const e of state.log) L.push(`${String(e.n).padStart(3)}  ${e.player}  ${e.tipo}${e.nodo ? ' @' + e.nodo : ''}${e.livello ? ' L' + e.livello : ''}`);
+  return L.join('\n');
+}
+function timelineBarsHTML(size = 10) {
+  const bk = timelineBuckets(size), tot = state.log.length;
+  const bar = (n, c) => `<span style="color:${c}">${'█'.repeat(n)}</span>`;
+  return bk.map((b, i) => {
+    const a = i * size + 1, z = Math.min((i + 1) * size, tot);
+    return `${String(a).padStart(2)}-${String(z).padStart(2)}  🏕${bar(b.c, '#29d0ff')}${b.c} 🎣${bar(b.p, '#ffd166')}${b.p} 🎪${bar(b.x, '#ff3d84')}${b.x}`;
+  }).join('\n');
+}
+function cronologiaHTML() {
+  return state.log.map((e) => `${String(e.n).padStart(3)} <span style="color:${PCOL[e.player]}">${e.player}</span> ${e.tipo}${e.nodo ? ' @' + e.nodo : ''}${e.livello ? ' L' + e.livello : ''}`).join('\n');
+}
+
+function reportTesto() {
+  const L = [];
+  L.push('PSYCADELIC SWAMP FEST — Report partita');
+  L.push('Seed: ' + curSeed);
+  L.push('Risorse attive: ' + Object.entries(state.attive).map(([z, r]) => `${z}=${r}`).join(', '));
+  L.push('Turni totali: ' + state.giocatori.reduce((s, g) => s + g.turni, 0));
+  L.push('');
+  for (const g of state.giocatori) {
+    const pl = [1, 2, 3].map((x) => g.carte.filter((c) => c.livello === x).length);
+    L.push(`${g.id} — ${g.punti} PV`);
+    L.push(`  turni giocati: ${g.turni}`);
+    L.push(`  costruisci: ${g.azioni.costruisci} · pesca: ${g.azioni.pesca} · consegne: ${g.azioni.consegna}`);
+    L.push(`  commesse: ${g.carte.length} (L1 ${pl[0]} · L2 ${pl[1]} · L3 ${pl[2]})`);
+    L.push('');
+  }
+  const w = vincitore(state);
+  L.push('Vincitore: ' + (w ? `${w.id} (${w.punti} PV)` : 'pareggio'));
+  L.push('', timelineTesto());
+  return L.join('\n');
+}
+
+function mostraReport() {
+  const tot = state.giocatori.reduce((s, g) => s + g.turni, 0);
+  let html = `<h3>📊 Report partita</h3>
+    <div style="display:flex; gap:8px; margin:0 0 10px; flex-wrap:wrap">
+      <button class="mini" id="rep-copy">📋 Copia</button>
+      <button class="mini" id="rep-dl">💾 Salva .txt</button>
+      <button class="mini" id="rep-map">🗺 Salva mappa</button>
+    </div>
+    <div class="pl"><b>Turni totali:</b> ${tot}</div>`;
+  for (const g of state.giocatori) {
+    const perLiv = [1, 2, 3].map((L) => g.carte.filter((c) => c.livello === L).length);
+    html += `<div class="pl turn" style="color:${PCOL[g.id]}">
+      <h3><span><span class="dot" style="color:${PCOL[g.id]}"></span>${g.id}</span><span class="pv">${g.punti} PV</span></h3>
+      <div style="color:var(--ink); line-height:1.7">
+        turni giocati: <b>${g.turni}</b><br>
+        🏕 costruisci: <b>${g.azioni.costruisci}</b> · 🎣 pesca: <b>${g.azioni.pesca}</b><br>
+        commesse: <b>${g.carte.length}</b> — L1 ${perLiv[0]} · L2 ${perLiv[1]} · L3 ${perLiv[2]}
+      </div></div>`;
+  }
+  html += `<div class="pl"><h3 style="margin-top:0">⏱ Timeline (10 turni)</h3><pre class="tl">${timelineBarsHTML()}</pre></div>`;
+  html += `<div class="pl"><h3 style="margin-top:0">Cronologia azioni</h3><pre class="tl scroll">${cronologiaHTML()}</pre></div>`;
+  const rep = document.getElementById('report');
+  rep.innerHTML = html;
+  rep.style.display = '';
+  for (const id of ['players','mkt-h','market']) document.getElementById(id).style.display = 'none';
+
+  document.getElementById('rep-copy').onclick = async () => {
+    try { await navigator.clipboard.writeText(reportTesto()); } catch { /* fallback: seleziona il testo */ }
+    const b = document.getElementById('rep-copy'); b.textContent = '✓ Copiato'; setTimeout(() => b.textContent = '📋 Copia', 1500);
+  };
+  document.getElementById('rep-dl').onclick = () =>
+    salva(`report-swamp-seed${curSeed}-${Date.now()}.txt`, new Blob([reportTesto()], { type: 'text/plain' }), 'text/plain', '.txt');
+  document.getElementById('rep-map').onclick = scaricaMappaPNG;
+}
+function resetReport() {
+  document.getElementById('report').style.display = 'none';
+  for (const id of ['players','mkt-h','market']) document.getElementById(id).style.display = '';
+}
+
+document.getElementById('a-new').onclick = () => {
+  // se siamo dentro l'iframe di index.html, torna alla home (menu/esperimenti) chiudendo il
+  // pannello "Gioca" — il listener 'toggle' lì scarica anche questo iframe (ferma l'AI in background).
+  if (window.parent !== window) {
+    const panel = window.parent.document.getElementById('giocaPanel');
+    if (panel) { panel.open = false; return; }
+  }
+  // fallback: game.html aperto da solo, non dentro l'iframe
+  mode = null; selNode = null;
+  document.getElementById('a-new').style.display = 'none';
+  document.getElementById('hint').textContent = '';
+  document.getElementById('game').classList.remove('on');
+  document.getElementById('setup').style.display = '';
+};
+</script>
