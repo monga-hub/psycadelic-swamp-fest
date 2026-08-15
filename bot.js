@@ -193,8 +193,11 @@ function tuttiNodiZona(state, board, Z) {
 function provaSalto(state, board, pid, Z, R, rand) {
   const pz = aPozione(state, pid, 'salto');
   if (!pz) return null;
+  // salto bypassa SOLO l'esclusività (capNodo) — muovi() applica spostamentoObbligatorio comunque, quindi
+  // il nodo dove il giocatore è ORA va escluso a prescindere: salto non lo sblocca, ci prova e basta gioca().
+  const qui = state.giocatori.find((g) => g.id === pid).lavoratore;
   const liberi = new Set(nodiZona(state, board, Z, pid).map((h) => hk(h.q, h.r)));
-  const bloccati = shuffle(tuttiNodiZona(state, board, Z).filter((h) => !liberi.has(hk(h.q, h.r))), rand);
+  const bloccati = shuffle(tuttiNodiZona(state, board, Z).filter((h) => !liberi.has(hk(h.q, h.r)) && hk(h.q, h.r) !== qui), rand);
   for (const node of bloccati) {
     const nodeK = hk(node.q, node.r);
     const t = trovaCostruzione(state, board, pid, node, R, rand);

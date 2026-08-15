@@ -302,8 +302,8 @@
   </details>
 </main>
 <script type="module">
-import { makeBoard, generaCarte, rng, vicini, vincitore, POZIONE_DEFAULT_MODO } from './engine.js?v=3';
-import { partita, PERSONALITA } from './bot.js?v=3';
+import { makeBoard, generaCarte, rng, vicini, vincitore, POZIONE_DEFAULT_MODO } from './engine.js?v=4';
+import { partita, PERSONALITA } from './bot.js?v=4';
 
 const el = (id) => document.getElementById(id);
 async function salva(nome, blob, tipo, ext) {
@@ -320,7 +320,7 @@ async function salva(nome, blob, tipo, ext) {
 el('giocaPanel').addEventListener('toggle', () => {
   const frame = el('gameFrame'), cur = frame.getAttribute('src');
   // 'about:blank', non '': src='' si risolve all'URL della pagina corrente (l'iframe ricarica se stesso)
-  frame.src = el('giocaPanel').open ? (cur && cur !== 'about:blank' ? cur : 'game.html?v=10') : 'about:blank';
+  frame.src = el('giocaPanel').open ? (cur && cur !== 'about:blank' ? cur : 'game.html?v=14') : 'about:blank';
 });
 
 // 3 board fisiche separate: 2p (standard), 3p (grande, 6 nodi), 4p (grande + 2 nodi "tessera
