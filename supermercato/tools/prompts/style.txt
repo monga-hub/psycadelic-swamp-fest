@@ -1,0 +1,5 @@
+Original pixel art game sprite for a cozy 1990s-style isometric management sim set in a small-town supermarket.
+Strict 2:1 isometric (dimetric) projection, camera looking down from the front.
+Exactly one object, centered, fully visible, nothing else in the image: no floor tile, no shadow, no people, no text, no logos, no watermark.
+Crisp hand-placed pixels, 1-pixel dark outlines, limited warm palette, soft shading lit from the upper left.
+The background must be a single flat pure magenta color (#FF00FF) filling the whole image, with no gradient and no magenta inside the object.
