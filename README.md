@@ -29,6 +29,16 @@ Poi apri **http://localhost:5180/index.html**.
 2. **Simulatore batch**: scegli N partite, numero giocatori, personalità/IA, premi "Simula" — report statistico completo (health check, KPI, distribuzione pozioni, heatmap nodi, ecc.).
 3. **▶ Gioca**: partita reale, umano contro AI (o umano contro umano). Quando aperta da `index.html` eredita automaticamente le regole configurate in "Festival Economy" — Festival Collaborativo escluso di proposito (non ha ancora una UI di contribuzione dedicata).
 
+## Spesa Pazza (prototipo gestionale)
+
+Nella cartella [`supermercato/`](supermercato/index.html) c'è **Spesa Pazza**, un gestionale isometrico di un supermercato in stile pixel-art anni '90. È un unico file HTML: aprilo direttamente nel browser (funziona anche da `file://`).
+
+- Costruisci reparti (8 categorie di prodotti), casse, carrelli, macchinetta del caffè, cestini, area relax e decorazioni.
+- Assumi cassieri, magazzinieri, addetti pulizie e vigilanti: ognuno ha bravura, stipendio, energia e morale.
+- I clienti arrivano con una lista della spesa, prendono i prodotti dagli scaffali (che si svuotano davvero), fanno la fila e pagano. Alcuni rubano.
+- Prezzi per reparto, campagne pubblicitarie, prestiti, resoconto settimanale, statistiche, tre obiettivi da raggiungere, salvataggio nel browser.
+- Comandi: trascina per spostare la visuale, rotella per lo zoom, `R` ruota, `Esc` annulla, `Spazio` pausa, `1`-`4` velocità.
+
 ## Note
 
 Progetto sperimentale/di design in corso — molte regole (pozioni, spostamento obbligatorio, capienza nodo, bonus risorse, ecc.) sono marcate "sperimentali" e pensate per essere testate e scartate/adottate via il Simulatore batch, non per essere già definitive.
